@@ -19,7 +19,7 @@ controller (their deviation from the live run is measured), the ego is parked ou
 the front camera's intrinsics follow the recorded ego pose at lateral offsets (ego frame, + = right); RGB / depth /
 instance images every EVERY-th tick -> OUT/novel/off_<dy>/..., poses -> OUT/replay.json. (CARLA's recorder replays
 the kinematic actors 1-2 ticks late in this build, so its replay is not used for ground truth.)
-usage: record.py PLAN_JSON OUT [--probe] [--ticks N] [--res 1280x720]
+usage: record.py PLAN_JSON OUT [--probe] [--ticks N] [--res 1280x720] [--raw]
        record.py PLAN_JSON OUT --novel LIVE_REC [--offsets -3,-2,-1,0,1,2,3] [--every 4]"""
 import json, math, os, queue, subprocess, sys, time, traceback
 import carla
@@ -37,6 +37,14 @@ NOVEL = os.path.abspath(sys.argv[sys.argv.index("--novel") + 1]) if "--novel" in
 OFFS = [float(v) for v in (sys.argv[sys.argv.index("--offsets") + 1] if "--offsets" in sys.argv else "-3,-2,-1,0,1,2,3").split(",")]
 EVERY = int(sys.argv[sys.argv.index("--every") + 1]) if "--every" in sys.argv else 4
 LIVE = [json.loads(l) for l in open(os.path.join(NOVEL, "frames.jsonl"))] if NOVEL else None
+RAW = "--raw" in sys.argv          # dump BGRA buffers (fast); convert/raw_to_png.py writes the PNGs afterwards
+
+
+def save_img(d, path_png):
+    if RAW:
+        open(path_png[:-4] + ".bgra", "wb").write(bytes(d.raw_data))
+    else:
+        d.save_to_disk(path_png)
 RES = sys.argv[sys.argv.index("--res") + 1] if "--res" in sys.argv else "1280x720"
 W, H = (int(v) for v in RES.split("x"))
 plan = json.load(open(PLAN))
@@ -156,8 +164,9 @@ def blueprint(a, i):
         b = next((w for w in walkers if w.id == want), walkers[(3 * i) % len(walkers)])
         if b.has_attribute("is_invincible"):
             b.set_attribute("is_invincible", "false")
-    elif a["kind"] == "bike":
-        b = bl.find("static.prop.mesh"); b.set_attribute("mesh_path", BIKE_MESH)
+    elif a["kind"] == "bike":                              # mass > 0 makes the prop movable (tested: without it
+        b = bl.find("static.prop.mesh"); b.set_attribute("mesh_path", BIKE_MESH)   # set_transform does nothing)
+        b.set_attribute("mass", "15")
     else:
         pool = cars or sorted(bl.filter("vehicle.*"), key=lambda b: b.id)
         b = next((x for x in bl.filter("vehicle.*") if x.id == PREF.get(a["name"])), pool[i % len(pool)])
@@ -176,11 +185,18 @@ ground_miss = [0]
 
 
 def ground_z(x, y, z_hint):
-    p = world.ground_projection(carla.Location(x, y, z_hint + 3.0), 8.0)
-    if p is not None and p.label in GROUND:
-        return p.location.z
+    """road-mesh height under (x, y); started lower when a pole / tree / sign is hit first"""
+    for up in (3.0, 1.5, 0.8):
+        p = world.ground_projection(carla.Location(x, y, z_hint + up), up + 5.0)
+        if p is not None and p.label in GROUND:
+            return p.location.z
     ground_miss[0] += 1
     return z_hint
+
+
+GROUND_CACHE = {}
+# the CrossBike mesh's own box (measured at yaw 0, rider_pose.py); CARLA reports an inconsistent box for a rotated prop
+BIKE_BB = carla.BoundingBox(carla.Location(0.0, 0.0, 0.539), carla.Vector3D(0.737, 0.418, 0.530))
 
 
 def kin_pose(a, k, bb):
@@ -188,11 +204,32 @@ def kin_pose(a, k, bb):
     x, y, z, yaw, _ = a["poses"][min(k, len(a["poses"]) - 1)]
     c, sn = math.cos(math.radians(yaw)), math.sin(math.radians(yaw))
     half = max(bb.extent.x * 0.6, 0.4)
-    zf, zr = ground_z(x + c * half, y + sn * half, z), ground_z(x - c * half, y - sn * half, z)
+    key = (a["name"], min(k, len(a["poses"]) - 1))
+    if key not in GROUND_CACHE:                     # normally filled before any actor exists (no self hits)
+        GROUND_CACHE[key] = (ground_z(x + c * half, y + sn * half, z), ground_z(x - c * half, y - sn * half, z))
+    zf, zr = GROUND_CACHE[key]
     pitch = math.degrees(math.atan2(zf - zr, 2 * half))
     base = bb.location.z - bb.extent.z                       # box bottom relative to the actor origin
     return carla.Transform(carla.Location(x, y, (zf + zr) / 2 - base + 0.01), carla.Rotation(pitch=pitch, yaw=yaw))
 
+
+# ---------------------------------------------------------------- road heights for every kinematic pose, before any actor
+# exists (a projection started above a spawned vehicle would hit its own roof); box sizes from a parked copy
+t_g = time.time()
+_probe = {}
+for a in (plan["actors"] if not NOVEL else []):
+    if a["kind"] not in ("car", "bike"):
+        continue
+    if a["kind"] == "bike":
+        bb_ = BIKE_BB
+    else:
+        tmp = world.try_spawn_actor(blueprint(a, 0), carla.Transform(carla.Location(0, 0, 500 + 10 * len(_probe))))
+        bb_ = tmp.bounding_box; tmp.destroy(); _probe[a["name"]] = 1
+    for k in (range(len(a["poses"])) if not a["static"] else [0]):
+        kin_pose(a, k, bb_)
+world.tick()
+print("road heights: %d poses, %d misses, %.0f s" % (len(GROUND_CACHE), ground_miss[0], time.time() - t_g), flush=True)
+ground_miss_precompute = ground_miss[0]
 
 # ---------------------------------------------------------------- recorder (before the actors exist)
 rec_file = os.path.join(OUT, "recording.log")
@@ -230,7 +267,7 @@ def place_kinematic(k):
     """Kinematic actors to plan pose k (riders follow their bike); returns nothing."""
     for name, (a, act) in actors.items():
         if a["kind"] in ("car", "bike") and (not a["static"] or k == 0):
-            tf = kin_pose(a, k, act.bounding_box)
+            tf = kin_pose(a, k, BIKE_BB if a["kind"] == "bike" else act.bounding_box)
             act.set_transform(tf)
             if a["kind"] == "bike" and "cyclist_rider" in actors:
                 actors["cyclist_rider"][1].set_transform(rider_tf(tf))
@@ -333,6 +370,13 @@ def collect(frame):
     return got
 
 
+# CARLA ue5-dev WalkerController.cpp: AddMovementInput(direction, Control.Speed / GetMaximumWalkSpeed()) with the
+# maximum hard-coded to 4096 cm/s, while the line that would set the character's MaxWalkSpeed to it is disabled for
+# UE5 ("#if 0 //@ Carla UE5"); the walker blueprints keep MaxWalkSpeed = 200 cm/s. A commanded speed v therefore walks
+# at v * 200 / 4096 (measured: 0.0488 x, three walkers, rec03). The command is scaled back (reachable: <= 2.0 m/s).
+WALKER_SPEED_GAIN = 4096.0 / 200.0
+
+
 def walker_step(a, act, k):
     """Walk towards the planned position of tick k+1 (look-ahead 1 m); speed corrected for lag (+-30 %)."""
     tx, ty = a["poses"][min(k + 1, TICKS)][:2]
@@ -346,14 +390,14 @@ def walker_step(a, act, k):
     ax, ay = (nx - loc.x, ny - loc.y) if math.hypot(nx - loc.x, ny - loc.y) > 1.0 else (dx, dy)
     n = math.hypot(ax, ay) or 1.0
     sp = min(max(v_plan + 0.8 * err * (1 if (dx * ax + dy * ay) > 0 else -1), 0.0), max(v_plan * 1.3, 0.6))
-    return carla.WalkerControl(carla.Vector3D(ax / n, ay / n, 0), sp)
+    return carla.WalkerControl(carla.Vector3D(ax / n, ay / n, 0), sp * WALKER_SPEED_GAIN)
 
 
 def actor_rows(snap):
     rows = []
     for name, (a, act) in actors.items():
         s_ = snap.find(act.id)
-        bb = act.bounding_box
+        bb = BIKE_BB if a["kind"] == "bike" else act.bounding_box
         v, w_ = s_.get_velocity(), s_.get_angular_velocity()
         rows.append(dict(name=name, id=act.id, type_id=act.type_id, cls=a["cls"], kind=a["kind"], static=a["static"],
                          tf=tf_list(s_.get_transform()), bbox=[bb.location.x, bb.location.y, bb.location.z,
@@ -446,7 +490,7 @@ try:
             if k % EVERY == 0:
                 cams_tf = {}
                 for (dy, mod), d in got.items():
-                    d.save_to_disk(os.path.join(OUT, "novel", "off_%s" % dy, mod, "%04d.png" % k))
+                    save_img(d, os.path.join(OUT, "novel", "off_%s" % dy, mod, "%04d.png" % k))
                     cams_tf["%s/%s" % (dy, mod)] = tf_list(d.transform)
                 views.append(dict(frame=k, tick=k, cams=cams_tf))
             if k % 20 == 0:
@@ -473,13 +517,15 @@ try:
                     name = "lidar" if mod == "lidar" else "semlidar"
                     open(os.path.join(OUT, name, "%04d.bin" % k), "wb").write(bytes(d.raw_data))
                 else:
-                    d.save_to_disk(os.path.join(OUT, "cam", cam, mod, "%04d.png" % k))
+                    save_img(d, os.path.join(OUT, "cam", cam, mod, "%04d.png" % k))
             fj.write(json.dumps(row) + "\n")
             if k % 20 == 0:
                 print("tick %d/%d  %.0f s  gpu %s" % (k, TICKS, time.time() - t_start, gpu_mem()), flush=True)
     meta["wall_s"] = time.time() - t_start
     meta["gpu_after"] = gpu_mem()
     meta["ground_miss"] = ground_miss[0]
+    meta["ground_miss_precompute"] = ground_miss_precompute
+    meta["ground_poses"] = len(GROUND_CACHE)
 finally:
     fj.close()
     json.dump(meta, open(os.path.join(OUT, "meta.json"), "w"), indent=1)

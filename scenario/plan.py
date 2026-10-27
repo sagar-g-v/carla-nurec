@@ -229,12 +229,14 @@ right_n, right_f = sorted(right_cw, key=lambda p: p[0] * fwd[0] + p[1] * fwd[1])
 w_bike = m.get_waypoint(carla.Location(461.2, 522.7, 83.2))        # cross street lane -4, 5 m before the junction
 assert w_bike.lane_id == -4 and not w_bike.is_junction, (w_bike.road_id, w_bike.lane_id)
 bike_path = offset(join(back(w_bike, 40.0), follow(w_bike, 95.0, prefer=(3920,))[0]), 1.1)   # near the kerb
+# CARLA walkers do not walk off a ledge (they stop at the kerb when leaving the sidewalk; stepping up is fine):
+# pedestrians start on the road 0.5 m inside the crosswalk and step up onto the far sidewalk
 peds = {
-    "ped_far_0": walk_line(far_r, far_l, 2.5, lateral=0.5),
-    "ped_far_1": walk_line(far_r, far_l, 2.5, lateral=-0.6),
-    "ped_left_0": walk_line(left_f, left_n, 2.5, lateral=0.5),
-    "ped_left_1": walk_line(left_f, left_n, 2.5, lateral=-0.5),
-    "ped_right_0": walk_line(right_n, right_f, 2.5, lateral=0.0),
+    "ped_far_0": walk_line(far_r, far_l, -0.5, lateral=0.5, ext_end=2.5),
+    "ped_far_1": walk_line(far_r, far_l, -0.5, lateral=-0.6, ext_end=2.5),
+    "ped_left_0": walk_line(left_f, left_n, -0.5, lateral=0.5, ext_end=2.5),
+    "ped_left_1": walk_line(left_f, left_n, -0.5, lateral=-0.5, ext_end=2.5),
+    "ped_right_0": walk_line(right_n, right_f, -0.5, lateral=0.0, ext_end=2.5),
 }
 
 # cars waiting at the red light on the cross street (road 3920 lanes -1, -2 enter the junction at these points)

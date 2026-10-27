@@ -91,3 +91,19 @@ Measured, see `convert/conventions.json`:
   blueprints exist in Content. The cyclist is CARLA's CrossBike mesh (`static.prop.mesh`) with a pedestrian posed
   as rider through the walker bone API (pose solved offline by inverse kinematics, `scenario/rider_ik.py`).
 - The audit spot's lane (road 933, lane -1) is a left-turn-only lane; the ego drives straight from lane -3.
+- `static.prop.mesh` actors ignore `set_transform` (static mobility; a plain prop moved 0.0 m after ten moves).
+  Spawned with `mass` > 0 and physics then switched off they move as commanded (5.0 m for 10 x 0.5 m)
+  (`scenario/prop_motion_test.py`). The first recording (`rec01`) had a parked bike and a floating rider because of
+  this; it was re-recorded (`rec02`).
+- CARLA's recorder replays kinematically placed actors (vehicles, the bike, the rider) 1-2 ticks late: replayed
+  positions 0.5-0.9 m off on average, up to 1.8 m at 9 m/s; walkers replay within ~5 mm. The live recording itself is
+  consistent (every moving car's pixels fall inside its ground-truth box, purity 1.00). Novel-view ground truth
+  therefore comes from a re-simulation that places every kinematic actor at its recorded transform
+  (`record.py --novel`); the recorder file is kept.
+- `world.ground_projection` from 3 m above a spawned kinematic vehicle hits its own roof; heights are now computed
+  for all planned poses before any actor is spawned (in `rec01` 1604 projections fell back to the OpenDRIVE lane
+  height, which also produced spurious pitch of a few degrees).
+- Instance ids map one-to-one to actors (purity >= 0.81 with padded boxes); semantic-lidar `object_idx` equals the
+  actor id (id 0 = static world).
+- Walker bounding boxes are reported rotated by -90 deg in the actor frame; the converter swaps the extents so a
+  pedestrian box's heading is the walking direction.

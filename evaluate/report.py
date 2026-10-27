@@ -23,18 +23,23 @@ L.append("## Held-out on-path views (every %s-th tick, all cameras; %d images)\n
 L.append("| camera | PSNR dB | SSIM | LPIPS (alex) |\n|---|---|---|---|")
 for c, v in h["per_camera"].items():
     L.append("| %s | %s | %s | %s |" % (c, f2(v["psnr"]), f2(v["ssim"], 3), f2(v["lpips"], 3)))
-L.append("| **all** | **%s** | **%s** | **%s** |" % (f2(h["psnr"]), f2(h["ssim"], 3), f2(h["lpips"], 3)))
+L.append("| **all, raw** | **%s** | **%s** | **%s** |" % (f2(h["psnr"]), f2(h["ssim"], 3), f2(h["lpips"], 3)))
+L.append("| all, exposure-aligned | %s | %s | %s |" % (f2(h["aligned"]["psnr"]), f2(h["aligned"]["ssim"], 3), f2(h["aligned"]["lpips"], 3)))
+L.append("\nRaw: the rendering as is. Exposure-aligned: a per-image affine colour fit between rendering and ground truth "
+         "first (CARLA's automatic exposure differs per image; the model never saw these images' exposure).")
 d = h["depth"]
 L.append("\nDepth vs CARLA depth (non-sky, < 80 m, alpha > 0.5): AbsRel %s, RMSE %s m, median |error| %s m, delta<1.25 %s.\n"
          % (f2(d["absrel"], 3), f2(d["rmse"]), f2(d["median_abs"], 3), f2(d["d125"], 3)))
-L.append("## Novel views off the driven path (front camera, replayed scenario)\n")
-L.append("| lateral offset | views | PSNR dB | SSIM | LPIPS | depth AbsRel | depth median abs m |\n|---|---|---|---|---|---|---|")
+L.append("## Novel views off the driven path (front camera shifted sideways, CARLA re-simulation)\n")
+L.append("| lateral offset (+ = right) | views | PSNR dB | SSIM | LPIPS | PSNR / SSIM / LPIPS exposure-aligned | depth AbsRel | depth median abs m |\n|---|---|---|---|---|---|---|---|")
 for k, v in M["novel"].items():
-    L.append("| %s m | %d | %s | %s | %s | %s | %s |" % (k, v["n"], f2(v["psnr"]), f2(v["ssim"], 3), f2(v["lpips"], 3),
-                                                   f2(v["depth"]["absrel"], 3), f2(v["depth"]["median_abs"], 3)))
+    al = v["aligned"]
+    L.append("| %s m | %d | %s | %s | %s | %s / %s / %s | %s | %s |" % (k, v["n"], f2(v["psnr"]), f2(v["ssim"], 3), f2(v["lpips"], 3),
+             f2(al["psnr"]), f2(al["ssim"], 3), f2(al["lpips"], 3), f2(v["depth"]["absrel"], 3), f2(v["depth"]["median_abs"], 3)))
 nf = M["replay_noise_floor"]
-L.append("\nReplay noise floor (replayed front camera at offset 0, ego hidden, vs the live recording, ego pixels excluded): "
-         "PSNR %s dB, SSIM %s, LPIPS %s over %d frames. Replayed actor positions vs live ground truth (mean / max m): %s.\n"
+L.append("\nRe-simulation noise floor (re-simulated front camera at offset 0, ego parked out of view, vs the live "
+         "recording, ego pixels excluded; differences come from walker animation, the missing ego shadow and exposure): "
+         "PSNR %s dB, SSIM %s, LPIPS %s over %d frames. Re-simulated actor positions vs the live run (mean / max m): %s.\n"
          % (f2(nf["psnr"]), f2(nf["ssim"], 3), f2(nf["lpips"], 3), nf["n"],
             ", ".join("%s %.3f/%.3f" % (n, v["mean_m"], v["max_m"]) for n, v in nf["replay_pose_error"].items())))
 if M.get("novel_skipped"):
@@ -59,6 +64,18 @@ for n in sorted(set(A["mask_iou"]) | set(A["geometry"])):
              " x ".join(f2(v) for v in geo.get("extent_rec", [])) or "-", " x ".join(f2(v) for v in geo.get("box_size", [])) or "-",
              f2(geo.get("centre_offset_m"), 3)))
 L.append("\n%s\n" % A["note"])
+if "recorder_replay_fidelity.json" in extra:
+    r = extra["recorder_replay_fidelity.json"]
+    L.append("CARLA recorder replay (not used for ground truth): best alignment %s; replayed actor position error vs the live "
+             "run (mean / max m): %s.\n" % (r["alignment"].split(": ", 1)[-1], ", ".join("%s %.2f/%.2f" % (n, v["mean_m"], v["max_m"])
+             for n, v in r["pose_error_vs_live_m"].items() if v["mean_m"] < 100)))
+if M.get("box_refinement"):
+    b = M["box_refinement"]
+    L.append("## Actor boxes from a noisy tracker (noise %s m, deg per frame)\n" % b["noise"])
+    L.append("| boxes | position error mean / median (m) | yaw error mean (deg) | box-frames |\n|---|---|---|---|")
+    for k in ("given", "refined"):
+        L.append("| %s | %s / %s | %s | %d |" % (k, f2(b[k]["pos_mean_m"], 3), f2(b[k]["pos_median_m"], 3), f2(b[k]["yaw_mean_deg"], 2), b[k]["n"]))
+    L.append("")
 if "exposure_check.json" in extra:
     s = extra["exposure_check.json"]["summary"]
     L.append("## Exposure check\n")

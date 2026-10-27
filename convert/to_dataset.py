@@ -55,9 +55,12 @@ for fr in frames:
     for a in fr["actors"]:
         if a["id"] == ego_id or a["id"] in MERGE:
             continue
+        bb = list(a["bbox"])
+        if abs(abs(bb[7]) - 90.0) < 1.0:                            # walker boxes come rotated by 90 deg: heading = walking
+            bb[3], bb[4], bb[7] = bb[4], bb[3], 0.0                 # direction, length along it
         d = actors.setdefault(a["id"], dict(name=a["name"], cls=a["cls"], kind=a["kind"], type_id=a["type_id"],
-                                            size=[2 * a["bbox"][3], 2 * a["bbox"][4], 2 * a["bbox"][5]], track={}))
-        T_box = pose(a["bbox"][:3] + a["bbox"][6:9])                 # box centre in the actor frame (FLU)
+                                            size=[2 * bb[3], 2 * bb[4], 2 * bb[5]], track={}))
+        T_box = pose(bb[:3] + bb[6:9])                                # box centre in the actor frame (FLU)
         d["track"][fr["tick"]] = (pose(a["tf"]) @ T_box).tolist()
 for aid, d in actors.items():
     P = np.array([np.array(T)[:3, 3] for T in d["track"].values()])
