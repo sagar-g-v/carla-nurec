@@ -25,6 +25,7 @@ ap.add_argument("--init-bg", type=int, default=300000); ap.add_argument("--expos
 ap.add_argument("--seed", type=int, default=0); ap.add_argument("--log-every", type=int, default=200)
 ap.add_argument("--box-noise", type=str, default="", help="T_SIGMA_M,YAW_SIGMA_DEG: perturb the actor boxes per frame")
 ap.add_argument("--refine-boxes", action="store_true", help="learn per-frame box corrections")
+ap.add_argument("--actor-reg", action="store_true", help="MCMC opacity / scale regularisers on actor groups too")
 args = ap.parse_args()
 torch.manual_seed(args.seed); np.random.seed(args.seed)
 os.makedirs(args.out, exist_ok=True)
@@ -131,6 +132,28 @@ if args.box_noise:                                                     # a noisy
             Rz = np.array([[np.cos(y), -np.sin(y), 0], [np.sin(y), np.cos(y), 0], [0, 0, 1]])
             T[:3, :3] = Rz @ T[:3, :3]; T[:2, 3] += e
             tr[k] = T.tolist()
+if args.box_noise:                                                     # actor shapes from lidar accumulated with the
+    merged = {int(k): v for k, v in D.get("merged", {}).items()}     # NOISY boxes (no ground-truth shape leaks in)
+    acc = {a: [] for a in tracks}
+    for f in D["frames"]:
+        pts = np.frombuffer(open(f["lidar"]["semlidar"], "rb").read(), SEML)
+        P = np.stack([pts["x"], pts["y"], pts["z"]], -1).astype(np.float64) @ np.diag(D["conventions"]["lidar_axes"]).T * [1, -1, 1]
+        T = np.array(f["lidar"]["T_world_lidar"])
+        Pw = P @ T[:3, :3].T + T[:3, 3] - center
+        idx = np.array([merged.get(int(i), int(i)) for i in pts["idx"]])
+        for a in tracks:
+            m = idx == int(a)
+            if m.any() and str(f["tick"]) in tracks[a]:
+                Ti = np.linalg.inv(np.array(tracks[a][str(f["tick"])]))
+                acc[a].append(Pw[m] @ Ti[:3, :3].T + Ti[:3, 3])
+    for a in tracks:
+        P = np.concatenate(acc[a]) if acc[a] else np.zeros((0, 3))
+        P = P[np.unique(np.floor(P / 0.03).astype(np.int64), axis=0, return_index=True)[1]] if len(P) else P
+        L, Wd, Hh = D["actors"][a]["size"]
+        if len(P) < 1500:
+            R = np.random.uniform(-0.5, 0.5, (1500 - len(P), 3)) * [L, Wd, Hh]
+            P = np.concatenate([P, R]) if len(P) else R
+        groups[a] = init_group(P, np.full((len(P), 3), 0.5), opacity=0.1)
 scene = Scene(groups, tracks).to(dev)
 if args.refine_boxes:
     scene.box_delta = BoxDelta([(a, int(k)) for a, tr in tracks.items() for k in tr]).to(dev)
@@ -212,10 +235,10 @@ for it in range(1, args.iters + 1):
     vis, s0 = {}, 0
     for name, cnt in owner:
         vis[name] = vis_all[s0:s0 + cnt]; s0 += cnt
-    reg_o, reg_s = [], []                                              # MCMC regularisers on visible Gaussians only
-    for name, m in vis.items():
-        if m.any():
-            g = scene.groups[name]
+    reg_o, reg_s = [], []                                              # MCMC regularisers on visible Gaussians only;
+    for name, m in vis.items():                                        # not on actors (small capped groups that are
+        if m.any() and (name == "bg" or args.actor_reg):               # tiny / occluded in most views: the regulariser
+            g = scene.groups[name]                                     # alone would fade them)
             reg_o.append(torch.sigmoid(g["opacities"][m])); reg_s.append(torch.exp(g["scales"][m]))
     if reg_o:
         loss = loss + 0.01 * torch.cat(reg_o).mean() + 0.01 * torch.cat(reg_s).mean()
@@ -254,9 +277,10 @@ for it in range(1, args.iters + 1):
             pic.save(os.path.join(args.out, "progress_%05d.jpg" % it), quality=90)
     if it % args.log_every == 0 or it == args.iters:
         n_g = {n: len(g["means"]) for n, g in scene.groups.items()}
-        alive = {n: int((torch.sigmoid(g["opacities"]) > 0.005).sum()) for n, g in scene.groups.items()}
+        alive = {n: int((torch.sigmoid(g["opacities"]) > 0.0051).sum()) for n, g in scene.groups.items()}   # MCMC clamps to 0.005
         row = dict(it=it, loss=round(loss.item(), 5), psnr_train=round(float(np.mean(hist[-args.log_every:])), 3),
                    alive_bg=alive["bg"], alive_actors=sum(v for k, v in alive.items() if k != "bg"),
+                   actor_opacity_mean=round(float(torch.cat([torch.sigmoid(g["opacities"]) for k, g in scene.groups.items() if k != "bg"]).mean()), 4),
                    n_bg=n_g["bg"], n_actors=sum(v for k, v in n_g.items() if k != "bg"),
                    it_s=round(it / (time.time() - t_start), 2), vram_peak_mb=round(torch.cuda.max_memory_allocated() / 1e6),
                    vram_reserved_mb=round(torch.cuda.memory_reserved() / 1e6), elapsed_s=round(time.time() - t_start))

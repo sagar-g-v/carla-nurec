@@ -177,6 +177,8 @@ live_frames = {json.loads(l)["tick"]: json.loads(l) for l in open(os.path.join(s
 def inside_actor(cam_tf, tick):
     p = G.pose_rh(cam_tf, D["conventions"]["rotation"])[:3, 3]
     for a in live_frames[tick]["actors"]:
+        if a["id"] == ego_id:                                              # the ego is parked away in the re-simulation
+            continue
         T = G.pose_rh(a["tf"], D["conventions"]["rotation"]) @ G.pose_rh(a["bbox"][:3] + a["bbox"][6:9], D["conventions"]["rotation"])
         L = np.linalg.inv(T) @ np.append(p, 1.0)
         if np.all(np.abs(L[:3]) <= np.array(a["bbox"][3:6]) + 0.3):
@@ -286,16 +288,18 @@ R["actors"] = dict(mask_iou={n: dict(mean=float(np.mean(v)), n=len(v)) for n, v 
 if CK.get("box_delta"):
     def yaw(T):
         return math.degrees(math.atan2(T[1, 0], T[0, 0]))
-    errs = {"given": [], "refined": []}
+    errs = {"given": [], "refined": [], "given_heldout_ticks": [], "refined_heldout_ticks": []}
+    test_t = {f["tick"] for f in D["frames"] if f["cams"]["CAM_FRONT"]["split"] == "test"}
     for (name, tick), i in scene.box_delta.index.items():
         Tg = np.array(CK["gt_tracks"][name][str(tick)] if str(tick) in CK["gt_tracks"][name] else CK["gt_tracks"][name][tick])
         Tn = CK["tracks"][name][str(tick)] if str(tick) in CK["tracks"][name] else CK["tracks"][name][tick]
         Tn = torch.tensor(np.array(Tn), dtype=torch.float32, device=dev)
         Tr = scene.box_delta.apply(name, tick, Tn).detach().cpu().numpy()
         for key, T in (("given", Tn.cpu().numpy()), ("refined", Tr)):
+            key = key + ("_heldout_ticks" if tick in test_t else "")      # held-out ticks get no image gradient
             errs[key].append((float(np.linalg.norm(T[:2, 3] - Tg[:2, 3])), abs((yaw(T) - yaw(Tg) + 180) % 360 - 180)))
     R["box_refinement"] = {k: dict(pos_mean_m=float(np.mean([e[0] for e in v])), pos_median_m=float(np.median([e[0] for e in v])),
-                                   yaw_mean_deg=float(np.mean([e[1] for e in v])), n=len(v)) for k, v in errs.items()}
+                                   yaw_mean_deg=float(np.mean([e[1] for e in v])), n=len(v)) for k, v in errs.items() if v}
     R["box_refinement"]["noise"] = CK["args"]["box_noise"]
     print("box refinement:", R["box_refinement"], flush=True)
 R["eval_s"] = time.time() - t0
