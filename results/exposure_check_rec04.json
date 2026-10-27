@@ -1,0 +1,1212 @@
+{
+ "summary": {
+  "neighbour_same_tick": {
+   "n": 66,
+   "median": 1.1208173996175907,
+   "p5": 0.9897200743271594,
+   "p95": 1.252687488073278
+  },
+  "same_cam_5_ticks": {
+   "n": 60,
+   "median": 1.0007898894154819,
+   "p5": 0.8695021375320107,
+   "p95": 1.263186660619233
+  },
+  "same_cam_20_ticks": {
+   "n": 60,
+   "median": 1.0455867292074188,
+   "p5": 0.7286409183846304,
+   "p95": 1.5801528944911298
+  }
+ },
+ "pairs": {
+  "neighbour_same_tick": [
+   {
+    "tick": 0,
+    "a": "CAM_FRONT",
+    "b": "CAM_FRONT_RIGHT",
+    "ratio": 1.1309328968903438,
+    "n": 12499
+   },
+   {
+    "tick": 0,
+    "a": "CAM_FRONT_RIGHT",
+    "b": "CAM_BACK_RIGHT",
+    "ratio": 1.1073253833049403,
+    "n": 8649
+   },
+   {
+    "tick": 0,
+    "a": "CAM_BACK_RIGHT",
+    "b": "CAM_BACK",
+    "ratio": 1.1419876543209877,
+    "n": 9708
+   },
+   {
+    "tick": 0,
+    "a": "CAM_BACK",
+    "b": "CAM_BACK_LEFT",
+    "ratio": 1.1600000000000001,
+    "n": 15824
+   },
+   {
+    "tick": 0,
+    "a": "CAM_BACK_LEFT",
+    "b": "CAM_FRONT_LEFT",
+    "ratio": 1.091743119266055,
+    "n": 12513
+   },
+   {
+    "tick": 0,
+    "a": "CAM_FRONT_LEFT",
+    "b": "CAM_FRONT",
+    "ratio": 1.1838657876943879,
+    "n": 15270
+   },
+   {
+    "tick": 20,
+    "a": "CAM_FRONT",
+    "b": "CAM_FRONT_RIGHT",
+    "ratio": 1.1166347992351815,
+    "n": 10893
+   },
+   {
+    "tick": 20,
+    "a": "CAM_FRONT_RIGHT",
+    "b": "CAM_BACK_RIGHT",
+    "ratio": 1.0939320898245304,
+    "n": 7170
+   },
+   {
+    "tick": 20,
+    "a": "CAM_BACK_RIGHT",
+    "b": "CAM_BACK",
+    "ratio": 1.0641956532404455,
+    "n": 8206
+   },
+   {
+    "tick": 20,
+    "a": "CAM_BACK",
+    "b": "CAM_BACK_LEFT",
+    "ratio": 1.1306562244062244,
+    "n": 16030
+   },
+   {
+    "tick": 20,
+    "a": "CAM_BACK_LEFT",
+    "b": "CAM_FRONT_LEFT",
+    "ratio": 1.0504607549915124,
+    "n": 9612
+   },
+   {
+    "tick": 20,
+    "a": "CAM_FRONT_LEFT",
+    "b": "CAM_FRONT",
+    "ratio": 1.2531645569620253,
+    "n": 17377
+   },
+   {
+    "tick": 40,
+    "a": "CAM_FRONT",
+    "b": "CAM_FRONT_RIGHT",
+    "ratio": 1.245608628659476,
+    "n": 10150
+   },
+   {
+    "tick": 40,
+    "a": "CAM_FRONT_RIGHT",
+    "b": "CAM_BACK_RIGHT",
+    "ratio": 1.069491525423729,
+    "n": 11009
+   },
+   {
+    "tick": 40,
+    "a": "CAM_BACK_RIGHT",
+    "b": "CAM_BACK",
+    "ratio": 1.034657850036399,
+    "n": 9024
+   },
+   {
+    "tick": 40,
+    "a": "CAM_BACK",
+    "b": "CAM_BACK_LEFT",
+    "ratio": 1.0463327370304114,
+    "n": 14144
+   },
+   {
+    "tick": 40,
+    "a": "CAM_BACK_LEFT",
+    "b": "CAM_FRONT_LEFT",
+    "ratio": 1.1258278145695364,
+    "n": 10973
+   },
+   {
+    "tick": 40,
+    "a": "CAM_FRONT_LEFT",
+    "b": "CAM_FRONT",
+    "ratio": 1.2917792792792793,
+    "n": 17144
+   },
+   {
+    "tick": 60,
+    "a": "CAM_FRONT",
+    "b": "CAM_FRONT_RIGHT",
+    "ratio": 1.0906926406926405,
+    "n": 7632
+   },
+   {
+    "tick": 60,
+    "a": "CAM_FRONT_RIGHT",
+    "b": "CAM_BACK_RIGHT",
+    "ratio": 0.9879518072289156,
+    "n": 8541
+   },
+   {
+    "tick": 60,
+    "a": "CAM_BACK_RIGHT",
+    "b": "CAM_BACK",
+    "ratio": 1.1006825938566553,
+    "n": 8851
+   },
+   {
+    "tick": 60,
+    "a": "CAM_BACK",
+    "b": "CAM_BACK_LEFT",
+    "ratio": 1.23125,
+    "n": 15681
+   },
+   {
+    "tick": 60,
+    "a": "CAM_BACK_LEFT",
+    "b": "CAM_FRONT_LEFT",
+    "ratio": 1.0184335711858647,
+    "n": 11940
+   },
+   {
+    "tick": 60,
+    "a": "CAM_FRONT_LEFT",
+    "b": "CAM_FRONT",
+    "ratio": 1.2255499760879962,
+    "n": 16616
+   },
+   {
+    "tick": 80,
+    "a": "CAM_FRONT",
+    "b": "CAM_FRONT_RIGHT",
+    "ratio": 1.1156201639722103,
+    "n": 17782
+   },
+   {
+    "tick": 80,
+    "a": "CAM_FRONT_RIGHT",
+    "b": "CAM_BACK_RIGHT",
+    "ratio": 1.0199115044247788,
+    "n": 6307
+   },
+   {
+    "tick": 80,
+    "a": "CAM_BACK_RIGHT",
+    "b": "CAM_BACK",
+    "ratio": 1.0709868295476235,
+    "n": 9636
+   },
+   {
+    "tick": 80,
+    "a": "CAM_BACK",
+    "b": "CAM_BACK_LEFT",
+    "ratio": 1.2451612903225806,
+    "n": 17417
+   },
+   {
+    "tick": 80,
+    "a": "CAM_BACK_LEFT",
+    "b": "CAM_FRONT_LEFT",
+    "ratio": 1.1696164041790111,
+    "n": 13682
+   },
+   {
+    "tick": 80,
+    "a": "CAM_FRONT_LEFT",
+    "b": "CAM_FRONT",
+    "ratio": 1.1614906832298137,
+    "n": 15669
+   },
+   {
+    "tick": 100,
+    "a": "CAM_FRONT",
+    "b": "CAM_FRONT_RIGHT",
+    "ratio": 0.9853300733496333,
+    "n": 17285
+   },
+   {
+    "tick": 100,
+    "a": "CAM_FRONT_RIGHT",
+    "b": "CAM_BACK_RIGHT",
+    "ratio": 1.0633739837398375,
+    "n": 6832
+   },
+   {
+    "tick": 100,
+    "a": "CAM_BACK_RIGHT",
+    "b": "CAM_BACK",
+    "ratio": 1.0450954387059863,
+    "n": 10628
+   },
+   {
+    "tick": 100,
+    "a": "CAM_BACK",
+    "b": "CAM_BACK_LEFT",
+    "ratio": 1.211984667455042,
+    "n": 17260
+   },
+   {
+    "tick": 100,
+    "a": "CAM_BACK_LEFT",
+    "b": "CAM_FRONT_LEFT",
+    "ratio": 1.1294117647058823,
+    "n": 12691
+   },
+   {
+    "tick": 100,
+    "a": "CAM_FRONT_LEFT",
+    "b": "CAM_FRONT",
+    "ratio": 1.1586942958159232,
+    "n": 16118
+   },
+   {
+    "tick": 120,
+    "a": "CAM_FRONT",
+    "b": "CAM_FRONT_RIGHT",
+    "ratio": 0.963949195096736,
+    "n": 17842
+   },
+   {
+    "tick": 120,
+    "a": "CAM_FRONT_RIGHT",
+    "b": "CAM_BACK_RIGHT",
+    "ratio": 1.2144212523719167,
+    "n": 5995
+   },
+   {
+    "tick": 120,
+    "a": "CAM_BACK_RIGHT",
+    "b": "CAM_BACK",
+    "ratio": 1.106761565836299,
+    "n": 10373
+   },
+   {
+    "tick": 120,
+    "a": "CAM_BACK",
+    "b": "CAM_BACK_LEFT",
+    "ratio": 1.172877631274578,
+    "n": 17578
+   },
+   {
+    "tick": 120,
+    "a": "CAM_BACK_LEFT",
+    "b": "CAM_FRONT_LEFT",
+    "ratio": 1.2296296296296296,
+    "n": 10799
+   },
+   {
+    "tick": 120,
+    "a": "CAM_FRONT_LEFT",
+    "b": "CAM_FRONT",
+    "ratio": 1.0979955456570156,
+    "n": 16223
+   },
+   {
+    "tick": 140,
+    "a": "CAM_FRONT",
+    "b": "CAM_FRONT_RIGHT",
+    "ratio": 1.0409836065573772,
+    "n": 13137
+   },
+   {
+    "tick": 140,
+    "a": "CAM_FRONT_RIGHT",
+    "b": "CAM_BACK_RIGHT",
+    "ratio": 1.1006441641425666,
+    "n": 5910
+   },
+   {
+    "tick": 140,
+    "a": "CAM_BACK_RIGHT",
+    "b": "CAM_BACK",
+    "ratio": 1.1514787296037297,
+    "n": 9716
+   },
+   {
+    "tick": 140,
+    "a": "CAM_BACK",
+    "b": "CAM_BACK_LEFT",
+    "ratio": 1.1077586206896552,
+    "n": 15869
+   },
+   {
+    "tick": 140,
+    "a": "CAM_BACK_LEFT",
+    "b": "CAM_FRONT_LEFT",
+    "ratio": 1.207207207207207,
+    "n": 8109
+   },
+   {
+    "tick": 140,
+    "a": "CAM_FRONT_LEFT",
+    "b": "CAM_FRONT",
+    "ratio": 1.1258741258741258,
+    "n": 15965
+   },
+   {
+    "tick": 160,
+    "a": "CAM_FRONT",
+    "b": "CAM_FRONT_RIGHT",
+    "ratio": 1.1108515510003816,
+    "n": 15716
+   },
+   {
+    "tick": 160,
+    "a": "CAM_FRONT_RIGHT",
+    "b": "CAM_BACK_RIGHT",
+    "ratio": 0.9792,
+    "n": 7245
+   },
+   {
+    "tick": 160,
+    "a": "CAM_BACK_RIGHT",
+    "b": "CAM_BACK",
+    "ratio": 1.1464435146443512,
+    "n": 8831
+   },
+   {
+    "tick": 160,
+    "a": "CAM_BACK",
+    "b": "CAM_BACK_LEFT",
+    "ratio": 1.0431876720845545,
+    "n": 15450
+   },
+   {
+    "tick": 160,
+    "a": "CAM_BACK_LEFT",
+    "b": "CAM_FRONT_LEFT",
+    "ratio": 1.2115812917594657,
+    "n": 10803
+   },
+   {
+    "tick": 160,
+    "a": "CAM_FRONT_LEFT",
+    "b": "CAM_FRONT",
+    "ratio": 1.2141119221411192,
+    "n": 12973
+   },
+   {
+    "tick": 180,
+    "a": "CAM_FRONT",
+    "b": "CAM_FRONT_RIGHT",
+    "ratio": 1.125,
+    "n": 16469
+   },
+   {
+    "tick": 180,
+    "a": "CAM_FRONT_RIGHT",
+    "b": "CAM_BACK_RIGHT",
+    "ratio": 1.0439122680782047,
+    "n": 14298
+   },
+   {
+    "tick": 180,
+    "a": "CAM_BACK_RIGHT",
+    "b": "CAM_BACK",
+    "ratio": 1.0283964230948155,
+    "n": 9546
+   },
+   {
+    "tick": 180,
+    "a": "CAM_BACK",
+    "b": "CAM_BACK_LEFT",
+    "ratio": 1.0,
+    "n": 10237
+   },
+   {
+    "tick": 180,
+    "a": "CAM_BACK_LEFT",
+    "b": "CAM_FRONT_LEFT",
+    "ratio": 1.1549841685773554,
+    "n": 8914
+   },
+   {
+    "tick": 180,
+    "a": "CAM_FRONT_LEFT",
+    "b": "CAM_FRONT",
+    "ratio": 1.2512562814070354,
+    "n": 17013
+   },
+   {
+    "tick": 200,
+    "a": "CAM_FRONT",
+    "b": "CAM_FRONT_RIGHT",
+    "ratio": 1.1374853588594047,
+    "n": 16814
+   },
+   {
+    "tick": 200,
+    "a": "CAM_FRONT_RIGHT",
+    "b": "CAM_BACK_RIGHT",
+    "ratio": 1.1403508771929824,
+    "n": 12399
+   },
+   {
+    "tick": 200,
+    "a": "CAM_BACK_RIGHT",
+    "b": "CAM_BACK",
+    "ratio": 0.9950248756218906,
+    "n": 12601
+   },
+   {
+    "tick": 200,
+    "a": "CAM_BACK",
+    "b": "CAM_BACK_LEFT",
+    "ratio": 1.3177524717514124,
+    "n": 13832
+   },
+   {
+    "tick": 200,
+    "a": "CAM_BACK_LEFT",
+    "b": "CAM_FRONT_LEFT",
+    "ratio": 1.0670926517571886,
+    "n": 10063
+   },
+   {
+    "tick": 200,
+    "a": "CAM_FRONT_LEFT",
+    "b": "CAM_FRONT",
+    "ratio": 1.3226659839563064,
+    "n": 17400
+   }
+  ],
+  "same_cam_5_ticks": [
+   {
+    "tick": 0,
+    "cam": "CAM_FRONT",
+    "ratio": 0.8696808510638299,
+    "n": 14741
+   },
+   {
+    "tick": 0,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 0.9868529081324,
+    "n": 15254
+   },
+   {
+    "tick": 0,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 1.007163323782235,
+    "n": 26320
+   },
+   {
+    "tick": 0,
+    "cam": "CAM_BACK",
+    "ratio": 1.195952770952771,
+    "n": 34862
+   },
+   {
+    "tick": 0,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 0.979002624671916,
+    "n": 47123
+   },
+   {
+    "tick": 0,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 0.9783783783783785,
+    "n": 28638
+   },
+   {
+    "tick": 20,
+    "cam": "CAM_FRONT",
+    "ratio": 0.88125,
+    "n": 15643
+   },
+   {
+    "tick": 20,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 1.0111642743221692,
+    "n": 16207
+   },
+   {
+    "tick": 20,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 0.9924299729519094,
+    "n": 24916
+   },
+   {
+    "tick": 20,
+    "cam": "CAM_BACK",
+    "ratio": 1.2626262626262625,
+    "n": 33943
+   },
+   {
+    "tick": 20,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 0.979971346704871,
+    "n": 46060
+   },
+   {
+    "tick": 20,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 1.0399999999999998,
+    "n": 24794
+   },
+   {
+    "tick": 40,
+    "cam": "CAM_FRONT",
+    "ratio": 0.8213423050379571,
+    "n": 13516
+   },
+   {
+    "tick": 40,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 0.9942992861243811,
+    "n": 19038
+   },
+   {
+    "tick": 40,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 1.0057692307692307,
+    "n": 29015
+   },
+   {
+    "tick": 40,
+    "cam": "CAM_BACK",
+    "ratio": 1.1465517241379308,
+    "n": 32741
+   },
+   {
+    "tick": 40,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 1.0286541268577496,
+    "n": 45066
+   },
+   {
+    "tick": 40,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 1.0449438202247192,
+    "n": 27693
+   },
+   {
+    "tick": 60,
+    "cam": "CAM_FRONT",
+    "ratio": 0.8221459108770555,
+    "n": 11522
+   },
+   {
+    "tick": 60,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 1.0015797788309637,
+    "n": 18945
+   },
+   {
+    "tick": 60,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 1.0402684563758389,
+    "n": 29110
+   },
+   {
+    "tick": 60,
+    "cam": "CAM_BACK",
+    "ratio": 1.3177257525083612,
+    "n": 35116
+   },
+   {
+    "tick": 60,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 1.034313725490196,
+    "n": 48520
+   },
+   {
+    "tick": 60,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 1.010928961748634,
+    "n": 28570
+   },
+   {
+    "tick": 80,
+    "cam": "CAM_FRONT",
+    "ratio": 0.9289975356034217,
+    "n": 23434
+   },
+   {
+    "tick": 80,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 0.9983191568099574,
+    "n": 21712
+   },
+   {
+    "tick": 80,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 0.97928715497164,
+    "n": 31726
+   },
+   {
+    "tick": 80,
+    "cam": "CAM_BACK",
+    "ratio": 1.2738342224856747,
+    "n": 38948
+   },
+   {
+    "tick": 80,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 1.0443864229765014,
+    "n": 52394
+   },
+   {
+    "tick": 80,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 0.9821428571428571,
+    "n": 32445
+   },
+   {
+    "tick": 100,
+    "cam": "CAM_FRONT",
+    "ratio": 0.9251207729468599,
+    "n": 25865
+   },
+   {
+    "tick": 100,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 1.0098684210526316,
+    "n": 25753
+   },
+   {
+    "tick": 100,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 0.9935240132245731,
+    "n": 27240
+   },
+   {
+    "tick": 100,
+    "cam": "CAM_BACK",
+    "ratio": 1.1242774566473988,
+    "n": 39119
+   },
+   {
+    "tick": 100,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 1.026431718061674,
+    "n": 52667
+   },
+   {
+    "tick": 100,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 0.9965397923875433,
+    "n": 32868
+   },
+   {
+    "tick": 120,
+    "cam": "CAM_FRONT",
+    "ratio": 0.9196891191709845,
+    "n": 26563
+   },
+   {
+    "tick": 120,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 0.9982949689227925,
+    "n": 28380
+   },
+   {
+    "tick": 120,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 0.9883608037931813,
+    "n": 24500
+   },
+   {
+    "tick": 120,
+    "cam": "CAM_BACK",
+    "ratio": 1.2027259217980868,
+    "n": 38996
+   },
+   {
+    "tick": 120,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 1.0,
+    "n": 49982
+   },
+   {
+    "tick": 120,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 1.0165213435438623,
+    "n": 29590
+   },
+   {
+    "tick": 140,
+    "cam": "CAM_FRONT",
+    "ratio": 0.904,
+    "n": 16013
+   },
+   {
+    "tick": 140,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 1.0228521215164448,
+    "n": 19264
+   },
+   {
+    "tick": 140,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 0.9917012448132781,
+    "n": 24667
+   },
+   {
+    "tick": 140,
+    "cam": "CAM_BACK",
+    "ratio": 1.278810408921933,
+    "n": 37659
+   },
+   {
+    "tick": 140,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 0.9402173913043478,
+    "n": 44150
+   },
+   {
+    "tick": 140,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 1.02823055028463,
+    "n": 26734
+   },
+   {
+    "tick": 160,
+    "cam": "CAM_FRONT",
+    "ratio": 0.9065420560747665,
+    "n": 16464
+   },
+   {
+    "tick": 160,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 1.0356877520696242,
+    "n": 21432
+   },
+   {
+    "tick": 160,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 0.9758064516129032,
+    "n": 20306
+   },
+   {
+    "tick": 160,
+    "cam": "CAM_BACK",
+    "ratio": 1.118421052631579,
+    "n": 35286
+   },
+   {
+    "tick": 160,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 0.9807692307692308,
+    "n": 43267
+   },
+   {
+    "tick": 160,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 0.9620253164556962,
+    "n": 20826
+   },
+   {
+    "tick": 180,
+    "cam": "CAM_FRONT",
+    "ratio": 0.8661065804274466,
+    "n": 19018
+   },
+   {
+    "tick": 180,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 1.0829015544041452,
+    "n": 27517
+   },
+   {
+    "tick": 180,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 1.010841519044021,
+    "n": 34468
+   },
+   {
+    "tick": 180,
+    "cam": "CAM_BACK",
+    "ratio": 1.1007751937984496,
+    "n": 29451
+   },
+   {
+    "tick": 180,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 1.157556270096463,
+    "n": 33599
+   },
+   {
+    "tick": 180,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 0.9540229885057472,
+    "n": 27933
+   }
+  ],
+  "same_cam_20_ticks": [
+   {
+    "tick": 0,
+    "cam": "CAM_FRONT",
+    "ratio": 0.7401298701298702,
+    "n": 3534
+   },
+   {
+    "tick": 0,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 1.1092981410106257,
+    "n": 5380
+   },
+   {
+    "tick": 0,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 0.9821958456973294,
+    "n": 13809
+   },
+   {
+    "tick": 0,
+    "cam": "CAM_BACK",
+    "ratio": 1.3783783783783783,
+    "n": 29531
+   },
+   {
+    "tick": 0,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 0.7304687500000001,
+    "n": 25641
+   },
+   {
+    "tick": 0,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 1.0775924979931402,
+    "n": 5762
+   },
+   {
+    "tick": 20,
+    "cam": "CAM_FRONT",
+    "ratio": 0.7439103958242714,
+    "n": 3576
+   },
+   {
+    "tick": 20,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 1.0873015873015872,
+    "n": 6139
+   },
+   {
+    "tick": 20,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 0.9159159159159159,
+    "n": 13538
+   },
+   {
+    "tick": 20,
+    "cam": "CAM_BACK",
+    "ratio": 1.6827633113097549,
+    "n": 28644
+   },
+   {
+    "tick": 20,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 0.786743515850144,
+    "n": 22641
+   },
+   {
+    "tick": 20,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 1.1509109609168382,
+    "n": 7960
+   },
+   {
+    "tick": 40,
+    "cam": "CAM_FRONT",
+    "ratio": 0.646875,
+    "n": 2447
+   },
+   {
+    "tick": 40,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 1.064864864864865,
+    "n": 4231
+   },
+   {
+    "tick": 40,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 0.9642857142857143,
+    "n": 15000
+   },
+   {
+    "tick": 40,
+    "cam": "CAM_BACK",
+    "ratio": 1.4436860068259385,
+    "n": 24153
+   },
+   {
+    "tick": 40,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 0.920245398773006,
+    "n": 27911
+   },
+   {
+    "tick": 40,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 1.3904609539046096,
+    "n": 7444
+   },
+   {
+    "tick": 60,
+    "cam": "CAM_FRONT",
+    "ratio": 0.6939121176926055,
+    "n": 2422
+   },
+   {
+    "tick": 60,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 1.1482893454177794,
+    "n": 6272
+   },
+   {
+    "tick": 60,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 1.0787722526532009,
+    "n": 17678
+   },
+   {
+    "tick": 60,
+    "cam": "CAM_BACK",
+    "ratio": 1.6884615384615385,
+    "n": 33469
+   },
+   {
+    "tick": 60,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 0.9536423841059603,
+    "n": 39127
+   },
+   {
+    "tick": 60,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 1.088235294117647,
+    "n": 9937
+   },
+   {
+    "tick": 80,
+    "cam": "CAM_FRONT",
+    "ratio": 0.8513637490701711,
+    "n": 10374
+   },
+   {
+    "tick": 80,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 0.9634933978512261,
+    "n": 11922
+   },
+   {
+    "tick": 80,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 0.8448637316561846,
+    "n": 23541
+   },
+   {
+    "tick": 80,
+    "cam": "CAM_BACK",
+    "ratio": 1.5789473684210527,
+    "n": 37599
+   },
+   {
+    "tick": 80,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 0.9942528735632183,
+    "n": 44671
+   },
+   {
+    "tick": 80,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 1.1015329517689192,
+    "n": 12496
+   },
+   {
+    "tick": 100,
+    "cam": "CAM_FRONT",
+    "ratio": 0.8283898305084746,
+    "n": 12813
+   },
+   {
+    "tick": 100,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 1.0781080531453362,
+    "n": 14900
+   },
+   {
+    "tick": 100,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 0.925,
+    "n": 17287
+   },
+   {
+    "tick": 100,
+    "cam": "CAM_BACK",
+    "ratio": 1.3207171314741035,
+    "n": 36877
+   },
+   {
+    "tick": 100,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 0.9481865284974094,
+    "n": 41483
+   },
+   {
+    "tick": 100,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 1.1126126126126126,
+    "n": 13303
+   },
+   {
+    "tick": 120,
+    "cam": "CAM_FRONT",
+    "ratio": 0.7790491135157518,
+    "n": 7258
+   },
+   {
+    "tick": 120,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 1.064804815614751,
+    "n": 14520
+   },
+   {
+    "tick": 120,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 0.9687964338781575,
+    "n": 19166
+   },
+   {
+    "tick": 120,
+    "cam": "CAM_BACK",
+    "ratio": 1.56260593220339,
+    "n": 37502
+   },
+   {
+    "tick": 120,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 0.9054054054054054,
+    "n": 33879
+   },
+   {
+    "tick": 120,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 1.1522024420860437,
+    "n": 12946
+   },
+   {
+    "tick": 140,
+    "cam": "CAM_FRONT",
+    "ratio": 0.8042953097523711,
+    "n": 3488
+   },
+   {
+    "tick": 140,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 1.228515625,
+    "n": 11878
+   },
+   {
+    "tick": 140,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 0.8525678591406729,
+    "n": 11044
+   },
+   {
+    "tick": 140,
+    "cam": "CAM_BACK",
+    "ratio": 1.5748580207961809,
+    "n": 36618
+   },
+   {
+    "tick": 140,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 0.756637168141593,
+    "n": 33163
+   },
+   {
+    "tick": 140,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 1.0940695296523517,
+    "n": 13443
+   },
+   {
+    "tick": 160,
+    "cam": "CAM_FRONT",
+    "ratio": 0.7528204175577222,
+    "n": 5060
+   },
+   {
+    "tick": 160,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 1.2100058849419666,
+    "n": 5738
+   },
+   {
+    "tick": 160,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 0.8576025889967637,
+    "n": 5790
+   },
+   {
+    "tick": 160,
+    "cam": "CAM_BACK",
+    "ratio": 1.1690394163542406,
+    "n": 33806
+   },
+   {
+    "tick": 160,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 0.8190954773869348,
+    "n": 26557
+   },
+   {
+    "tick": 160,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 1.0603448275862069,
+    "n": 7297
+   },
+   {
+    "tick": 180,
+    "cam": "CAM_FRONT",
+    "ratio": 0.6656346749226006,
+    "n": 4809
+   },
+   {
+    "tick": 180,
+    "cam": "CAM_FRONT_RIGHT",
+    "ratio": 1.1130434782608694,
+    "n": 10056
+   },
+   {
+    "tick": 180,
+    "cam": "CAM_BACK_RIGHT",
+    "ratio": 0.9726469747746344,
+    "n": 33528
+   },
+   {
+    "tick": 180,
+    "cam": "CAM_BACK",
+    "ratio": 1.3777292576419216,
+    "n": 24001
+   },
+   {
+    "tick": 180,
+    "cam": "CAM_BACK_LEFT",
+    "ratio": 1.0308286308286307,
+    "n": 14574
+   },
+   {
+    "tick": 180,
+    "cam": "CAM_FRONT_LEFT",
+    "ratio": 1.6030578898225958,
+    "n": 6748
+   }
+  ]
+ }
+}

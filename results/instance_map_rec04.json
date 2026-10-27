@@ -1,0 +1,218 @@
+{
+ "camera": {
+  "52689": {
+   "actor": 1879,
+   "name": "lead",
+   "votes": 3719,
+   "purity": 1.0
+  },
+  "52631": {
+   "actor": 1878,
+   "name": "ego",
+   "votes": 129532,
+   "purity": 1.0
+  },
+  "52983": {
+   "actor": 1885,
+   "name": "ped_far_1",
+   "votes": 12458,
+   "purity": 1.0
+  },
+  "52972": {
+   "actor": 1884,
+   "name": "ped_far_0",
+   "votes": 7903,
+   "purity": 1.0
+  },
+  "53119": {
+   "actor": 1891,
+   "name": "cyclist_rider",
+   "votes": 1489,
+   "purity": 0.976
+  },
+  "52737": {
+   "actor": 1891,
+   "name": "cyclist_rider",
+   "votes": 1208,
+   "purity": 0.854
+  },
+  "52840": {
+   "actor": 1882,
+   "name": "oncoming_rt",
+   "votes": 7287,
+   "purity": 1.0
+  },
+  "53016": {
+   "actor": 1888,
+   "name": "ped_right_0",
+   "votes": 631,
+   "purity": 1.0
+  },
+  "53097": {
+   "actor": 1890,
+   "name": "wait_1",
+   "votes": 3328,
+   "purity": 1.0
+  },
+  "53027": {
+   "actor": 1889,
+   "name": "wait_0",
+   "votes": 2825,
+   "purity": 1.0
+  },
+  "52751": {
+   "actor": 1881,
+   "name": "oncoming_lt",
+   "votes": 58225,
+   "purity": 1.0
+  },
+  "52888": {
+   "actor": 1883,
+   "name": "oncoming_stop",
+   "votes": 113928,
+   "purity": 1.0
+  },
+  "53005": {
+   "actor": 1887,
+   "name": "ped_left_1",
+   "votes": 862,
+   "purity": 1.0
+  },
+  "52994": {
+   "actor": 1886,
+   "name": "ped_left_0",
+   "votes": 1108,
+   "purity": 0.941
+  }
+ },
+ "lidar": {
+  "1879": {
+   "actor": 1879,
+   "name": "lead",
+   "votes": 926,
+   "purity": 1.0
+  },
+  "1878": {
+   "actor": 1878,
+   "name": "ego",
+   "votes": 26810,
+   "purity": 1.0
+  },
+  "1884": {
+   "actor": 1884,
+   "name": "ped_far_0",
+   "votes": 779,
+   "purity": 1.0
+  },
+  "1885": {
+   "actor": 1885,
+   "name": "ped_far_1",
+   "votes": 1533,
+   "purity": 1.0
+  },
+  "1882": {
+   "actor": 1882,
+   "name": "oncoming_rt",
+   "votes": 880,
+   "purity": 1.0
+  },
+  "1891": {
+   "actor": 1891,
+   "name": "cyclist_rider",
+   "votes": 193,
+   "purity": 0.975
+  },
+  "1881": {
+   "actor": 1881,
+   "name": "oncoming_lt",
+   "votes": 6019,
+   "purity": 1.0
+  },
+  "1888": {
+   "actor": 1888,
+   "name": "ped_right_0",
+   "votes": 99,
+   "purity": 1.0
+  },
+  "1890": {
+   "actor": 1890,
+   "name": "wait_1",
+   "votes": 548,
+   "purity": 1.0
+  },
+  "1889": {
+   "actor": 1889,
+   "name": "wait_0",
+   "votes": 410,
+   "purity": 1.0
+  },
+  "1883": {
+   "actor": 1883,
+   "name": "oncoming_stop",
+   "votes": 10517,
+   "purity": 1.0
+  },
+  "1887": {
+   "actor": 1887,
+   "name": "ped_left_1",
+   "votes": 127,
+   "purity": 1.0
+  },
+  "1886": {
+   "actor": 1886,
+   "name": "ped_left_0",
+   "votes": 143,
+   "purity": 0.953
+  }
+ },
+ "summary": {
+  "camera_ids_per_actor": {
+   "ego": [
+    52631
+   ],
+   "lead": [
+    52689
+   ],
+   "cyclist": [],
+   "oncoming_lt": [
+    52751
+   ],
+   "oncoming_rt": [
+    52840
+   ],
+   "oncoming_stop": [
+    52888
+   ],
+   "ped_far_0": [
+    52972
+   ],
+   "ped_far_1": [
+    52983
+   ],
+   "ped_left_0": [
+    52994
+   ],
+   "ped_left_1": [
+    53005
+   ],
+   "ped_right_0": [
+    53016
+   ],
+   "wait_0": [
+    53027
+   ],
+   "wait_1": [
+    53097
+   ],
+   "cyclist_rider": [
+    52737,
+    53119
+   ]
+  },
+  "lidar_idx_equals_actor_id": true,
+  "min_camera_purity": 0.854,
+  "min_lidar_purity": 0.953
+ },
+ "every": 10,
+ "pad": 0.15
+}

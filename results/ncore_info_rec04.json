@@ -1,0 +1,35 @@
+{
+ "manifest": "C:\\mywork\\osm2carla\\build\\nurec\\ncore04\\carla_la_dtla_j10295.json",
+ "stores": [
+  "C:\\mywork\\osm2carla\\build\\nurec\\ncore04\\carla_la_dtla_j10295.ncore4.zarr.itar"
+ ],
+ "cameras": [
+  "camera_front",
+  "camera_front_left",
+  "camera_front_right",
+  "camera_back_left",
+  "camera_back_right",
+  "camera_back"
+ ],
+ "lidar": "lidar_top",
+ "frames": 201,
+ "interval_us": [
+  23087869,
+  43087870
+ ],
+ "cuboid_observations": 2412,
+ "mount_deviation": {
+  "camera_front": 6.763738045378886e-05,
+  "camera_front_left": 6.678123259007407e-05,
+  "camera_front_right": 5.4893633432584465e-05,
+  "camera_back_left": 6.232727398014504e-05,
+  "camera_back_right": 5.703029069081822e-05,
+  "camera_back": 5.2596333262044936e-05,
+  "lidar_top": 5.005720319672946e-05
+ },
+ "readback": {
+  "camera_frames": 201,
+  "lidar_frames": 201,
+  "boxes_drawn": 12
+ }
+}

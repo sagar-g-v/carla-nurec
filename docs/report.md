@@ -1,8 +1,9 @@
-# Report: CARLA scenario -> NuRec-style reconstruction -> comparison with CARLA ground truth
+﻿# Report: CARLA scenario -> NuRec-style reconstruction -> comparison with CARLA ground truth
 
 Date: 2026-10-28. Machine: Windows 11, RTX 4050 Laptop GPU (6 GB), 64 GB RAM. CARLA 0.10 (UE5 `ue5-dev` source
 build), map `LA_DTLA_ODR` (MirrorMile Downtown LA). All numbers below are measured; the full tables are in
-[results.md](results.md) (generated from `metrics.json` by `evaluate/report.py`).
+[results.md](results.md) (generated from `metrics.json` by `evaluate/report.py`); the raw metric files are in
+[../results/](../results/).
 
 ## Summary
 
@@ -32,7 +33,30 @@ build), map `LA_DTLA_ODR` (MirrorMile Downtown LA). All numbers below are measur
    Depth vs CARLA depth on held-out views: AbsRel 0.065, median error 0.32 m, delta<1.25 0.962. Geometry vs lidar:
    median depth error at lidar points 0.26 m (72 % within 0.5 m); F-score 0.62 @ 0.2 m, 0.83 @ 0.5 m. Dynamic actors
    (positions from the boxes, shape learned): mask IoU vs CARLA instance masks 0.53-0.79 for the cars, the cyclist and
-   the crossing pedestrians. Noisy-box experiment: see below.
+   the crossing pedestrians. Noisy tracker boxes (0.3 m / 3 deg): learned per-frame corrections reduce the position
+   error from 0.374 to 0.330 m (mean) but increase the yaw error from 2.4 to 4.4 deg (below).
+
+## Dynamic actor positions vs the ground-truth boxes
+
+With ground-truth boxes as input (as NuRec takes tracked cuboids) the actors sit exactly where the boxes say, so the
+meaningful test is a noisy tracker: every actor's box is perturbed independently per frame (sigma 0.3 m in x / y and
+3 deg in yaw), the actor shapes are accumulated from lidar with those noisy boxes, and the trainer learns a correction
+(translation + yaw) per actor and frame (`train.py --box-noise 0.3,3 --refine-boxes`, 15 000 iterations, 26.5 min,
+2.05 GB VRAM; `eval04n/metrics.json`, `eval04n/box_per_actor.json`).
+
+| boxes vs CARLA ground truth (training ticks, 1810 box-frames) | position error mean / median | yaw error mean |
+|---|---|---|
+| given (noisy) | 0.374 m / 0.353 m | 2.42 deg |
+| refined | 0.330 m / 0.292 m | 4.38 deg |
+
+Per actor the position error drops for every actor the model reconstructs (best: the left-turning SUV
+0.385 -> 0.285 m; the other cars and the cyclist 0.35-0.39 -> 0.30-0.32 m; pedestrians 0.38-0.39 -> 0.33-0.35 m) and does not
+for the two left-crosswalk pedestrians (not reconstructed, see below). The yaw gets **worse** for every actor, least
+for the SUV (2.57 -> 2.66 deg): the learned yaw corrections average 3.8 deg, larger than the noise. So this simple per-frame
+refinement (no temporal smoothness, Adam momentum on rarely sampled frames, shape learned from the blurred
+accumulation) recovers 8-26 % of the position noise (per actor) and none of the heading noise. With the noisy boxes the images
+also suffer: held-out 21.01 dB raw / 21.80 dB aligned after 15 000 iterations, actor mask IoU 0.42-0.68 for the cars, 0.27 for the
+cyclist, 0.06-0.19 for the crossing pedestrians, 0 for the left-crosswalk pair. Held-out ticks keep their noisy boxes (no image constrains them).
 
 ## Training: do we need it?
 

@@ -1,0 +1,76 @@
+{
+ "lead": {
+  "pos_given": 0.3519,
+  "pos_refined": 0.3045,
+  "yaw_given": 2.3023,
+  "yaw_refined": 5.6919,
+  "n": 181
+ },
+ "cyclist": {
+  "pos_given": 0.388,
+  "pos_refined": 0.3179,
+  "yaw_given": 2.4312,
+  "yaw_refined": 5.299,
+  "n": 181
+ },
+ "oncoming_lt": {
+  "pos_given": 0.3851,
+  "pos_refined": 0.2853,
+  "yaw_given": 2.5747,
+  "yaw_refined": 2.6628,
+  "n": 181
+ },
+ "oncoming_rt": {
+  "pos_given": 0.3678,
+  "pos_refined": 0.2983,
+  "yaw_given": 2.396,
+  "yaw_refined": 3.5571,
+  "n": 181
+ },
+ "oncoming_stop": {
+  "pos_given": 0.3526,
+  "pos_refined": 0.3092,
+  "yaw_given": 2.3217,
+  "yaw_refined": 3.9235,
+  "n": 181
+ },
+ "ped_far_0": {
+  "pos_given": 0.3889,
+  "pos_refined": 0.3355,
+  "yaw_given": 2.3677,
+  "yaw_refined": 4.0899,
+  "n": 181
+ },
+ "ped_far_1": {
+  "pos_given": 0.3754,
+  "pos_refined": 0.3329,
+  "yaw_given": 2.4772,
+  "yaw_refined": 5.4033,
+  "n": 181
+ },
+ "ped_left_0": {
+  "pos_given": 0.3564,
+  "pos_refined": 0.3632,
+  "yaw_given": 2.5685,
+  "yaw_refined": 4.7961,
+  "n": 181
+ },
+ "ped_left_1": {
+  "pos_given": 0.398,
+  "pos_refined": 0.4076,
+  "yaw_given": 2.4229,
+  "yaw_refined": 3.9735,
+  "n": 181
+ },
+ "ped_right_0": {
+  "pos_given": 0.3785,
+  "pos_refined": 0.348,
+  "yaw_given": 2.3604,
+  "yaw_refined": 4.3534,
+  "n": 181
+ },
+ "_delta_magnitude": {
+  "xy_mean_m": 0.1513644903898239,
+  "yaw_mean_deg": 3.7924811840057373
+ }
+}
