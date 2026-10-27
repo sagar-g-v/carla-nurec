@@ -11,6 +11,7 @@ import torch
 import torch.nn.functional as F
 from PIL import Image
 from gsplat.strategy import MCMCStrategy
+from gsplat.optimizers import SelectiveAdam
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, "..", "convert"))
 from model import Scene, init_group, BoxDelta
@@ -154,7 +155,11 @@ LR = dict(scales=5e-3, quats=1e-3, opacities=5e-2, sh0=2.5e-3, shN=2.5e-3 / 20)
 opt, strat, state = {}, {}, {}
 for n, g in scene.groups.items():
     mlr = 1.6e-4 * (scene_scale if n == "bg" else 5.0)
-    opt[n] = {k: torch.optim.Adam([g[k]], lr=(mlr if k == "means" else LR[k]), eps=1e-15) for k in g.keys()}
+    # Adam only on Gaussians seen in the rendered view: with a 360 deg rig most Gaussians are invisible in any one
+    # view, and plain Adam would turn the regularisers' tiny gradients into full steps that fade them out
+    opt[n] = {k: SelectiveAdam([g[k]], eps=1e-15, betas=(0.9, 0.999)) for k in g.keys()}
+    for k, o in opt[n].items():
+        o.param_groups[0]["lr"] = mlr if k == "means" else LR[k]
     strat[n] = SafeMCMC(cap_max=caps[n], refine_start_iter=500, refine_stop_iter=int(args.iters * 0.8),
                             refine_every=100, min_opacity=0.005)
     strat[n].check_sanity(g, opt[n]); state[n] = strat[n].initialize_state()
@@ -203,20 +208,30 @@ for it in range(1, args.iters + 1):
     a = alpha.clamp(1e-4, 1 - 1e-4)
     target = (~sky).float()
     loss = loss + 0.05 * F.binary_cross_entropy(a[~ego], target[~ego])
-    present = {name for name, _ in owner}                              # MCMC regularisers on the groups in this frame
-    for n in present:
-        g = scene.groups[n]
-        loss = loss + 0.01 * torch.sigmoid(g["opacities"]).mean() + 0.01 * torch.exp(g["scales"]).mean()
+    vis_all = (info["radii"][0] > 0).all(-1)                           # Gaussians that touch this view
+    vis, s0 = {}, 0
+    for name, cnt in owner:
+        vis[name] = vis_all[s0:s0 + cnt]; s0 += cnt
+    reg_o, reg_s = [], []                                              # MCMC regularisers on visible Gaussians only
+    for name, m in vis.items():
+        if m.any():
+            g = scene.groups[name]
+            reg_o.append(torch.sigmoid(g["opacities"][m])); reg_s.append(torch.exp(g["scales"][m]))
+    if reg_o:
+        loss = loss + 0.01 * torch.cat(reg_o).mean() + 0.01 * torch.cat(reg_s).mean()
     if args.exposure:
         loss = loss + 1e-2 * (expo[i] ** 2).sum()
     loss.backward()
     frac = it / args.iters
     for n, g in scene.groups.items():
         lr_m = mlr0[n] * (0.01 ** frac)
+        m = vis.get(n)
         for k, o in opt[n].items():
             if k == "means":
                 o.param_groups[0]["lr"] = lr_m
-            o.step(); o.zero_grad(set_to_none=True)
+            if m is not None and m.any():
+                o.step(m)
+            o.zero_grad(set_to_none=True)
         strat[n].step_post_backward(g, opt[n], state[n], it, info, lr=lr_m)
     sky_opt.step(); sky_opt.zero_grad(set_to_none=True)
     if args.refine_boxes and it > 500:
@@ -228,9 +243,20 @@ for it in range(1, args.iters + 1):
     with torch.no_grad():
         mse = (((rgb - gt) ** 2) * valid).sum() / (valid.sum() * 3 + 1)
         hist.append(-10 * math.log10(max(mse.item(), 1e-10)))
+    if it % 5000 == 0 and it < args.iters:                            # progress picture of a held-out view
+        with torch.no_grad():
+            tv = [f for f in D["frames"] if f["cams"]["CAM_FRONT"]["split"] == "test"][len(D["frames"]) // 20]
+            Tt = torch.tensor(SHIFT @ np.array(tv["cams"]["CAM_FRONT"]["T_world_cam"]), dtype=torch.float32)
+            r_, _, _, _, _ = scene.render(Tt, K, W, H, tv["tick"])
+            g_ = Image.open(tv["cams"]["CAM_FRONT"]["rgb"]).convert("RGB").resize((W, H), Image.BOX)
+            pic = Image.new("RGB", (2 * W, H)); pic.paste(g_, (0, 0))
+            pic.paste(Image.fromarray((r_.clamp(0, 1).cpu().numpy() * 255).astype(np.uint8)), (W, 0))
+            pic.save(os.path.join(args.out, "progress_%05d.jpg" % it), quality=90)
     if it % args.log_every == 0 or it == args.iters:
         n_g = {n: len(g["means"]) for n, g in scene.groups.items()}
+        alive = {n: int((torch.sigmoid(g["opacities"]) > 0.005).sum()) for n, g in scene.groups.items()}
         row = dict(it=it, loss=round(loss.item(), 5), psnr_train=round(float(np.mean(hist[-args.log_every:])), 3),
+                   alive_bg=alive["bg"], alive_actors=sum(v for k, v in alive.items() if k != "bg"),
                    n_bg=n_g["bg"], n_actors=sum(v for k, v in n_g.items() if k != "bg"),
                    it_s=round(it / (time.time() - t_start), 2), vram_peak_mb=round(torch.cuda.max_memory_allocated() / 1e6),
                    vram_reserved_mb=round(torch.cuda.memory_reserved() / 1e6), elapsed_s=round(time.time() - t_start))

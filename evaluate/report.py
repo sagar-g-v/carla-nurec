@@ -1,6 +1,7 @@
-"""metrics.json (+ panels) -> docs/report.md: every number in the report is read from the evaluation output.
+﻿"""metrics.json (+ panels) -> docs/report.md: every number in the report is read from the evaluation output.
 usage: report.py EVAL_DIR DOCS_DIR [--extra JSON ...]   (extra: exposure_check.json, instance_map.json, replay.json)"""
-import json, os, shutil, sys
+import json, os, sys
+from PIL import Image
 
 E, DOCS = sys.argv[1], sys.argv[2]
 M = json.load(open(os.path.join(E, "metrics.json")))
@@ -65,7 +66,8 @@ if "exposure_check.json" in extra:
              "; ".join("%s %.3f (5-95 %%: %.3f-%.3f, %d pairs)" % (k.replace("_", " "), v["median"], v["p5"], v["p95"], v["n"]) for k, v in s.items()) + ".\n")
 L.append("## Pictures\n")
 for f in sorted(os.listdir(os.path.join(E, "img"))):
-    shutil.copy(os.path.join(E, "img", f), os.path.join(img_out, f))
-    L.append("**%s** (top: CARLA | reconstruction; bottom: |error| x4 | rendered depth)\n\n![%s](img/%s)\n" % (f[:-4], f, f))
+    j = f[:-4] + ".jpg"                                            # JPEG keeps the repository small
+    Image.open(os.path.join(E, "img", f)).convert("RGB").save(os.path.join(img_out, j), quality=88)
+    L.append("**%s** (top: CARLA | reconstruction; bottom: |error| x4 | rendered depth)\n\n![%s](img/%s)\n" % (f[:-4], j, j))
 open(os.path.join(DOCS, "results.md"), "w", encoding="utf-8").write("\n".join(L))
 print("wrote", os.path.join(DOCS, "results.md"))
