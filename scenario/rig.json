@@ -1,0 +1,19 @@
+{
+ "note": "Poses relative to the ego actor origin, CARLA/UE axes (x forward, y right, z up; metres; pitch, yaw, roll in degrees). Six pinhole cameras with 90 deg horizontal FOV at 60 deg yaw spacing (30 deg overlap), global shutter; a 64-beam spinning lidar doing one full turn per 0.1 s tick, no noise or dropoff (ground truth).",
+ "fov": 90,
+ "rgb_attributes": {"motion_blur_intensity": 0.0, "motion_blur_max_distortion": 0.0, "lens_flare_intensity": 0.0,
+                    "exposure_mode": "manual"},
+ "cameras": [
+  {"name": "CAM_FRONT",       "pose": [1.0,  0.0, 1.7, 0.0,    0.0, 0.0]},
+  {"name": "CAM_FRONT_LEFT",  "pose": [0.8, -0.5, 1.7, 0.0,  -60.0, 0.0]},
+  {"name": "CAM_FRONT_RIGHT", "pose": [0.8,  0.5, 1.7, 0.0,   60.0, 0.0]},
+  {"name": "CAM_BACK_LEFT",   "pose": [-0.8, -0.5, 1.7, 0.0, -120.0, 0.0]},
+  {"name": "CAM_BACK_RIGHT",  "pose": [-0.8,  0.5, 1.7, 0.0,  120.0, 0.0]},
+  {"name": "CAM_BACK",        "pose": [-1.2,  0.0, 1.7, 0.0,  180.0, 0.0]}
+ ],
+ "lidar": {"pose": [0.0, 0.0, 2.0, 0.0, 0.0, 0.0],
+           "attributes": {"channels": 64, "range": 100.0, "points_per_second": 1152000, "rotation_frequency": 10.0,
+                          "upper_fov": 15.0, "lower_fov": -25.0, "horizontal_fov": 360.0,
+                          "dropoff_general_rate": 0.0, "dropoff_zero_intensity": 0.0, "dropoff_intensity_limit": 1.0,
+                          "noise_stddev": 0.0, "atmosphere_attenuation_rate": 0.004}}
+}

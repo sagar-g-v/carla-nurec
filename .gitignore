@@ -1,0 +1,8 @@
+# environments / caches
+.venv/
+__pycache__/
+*.pyc
+# server logs and run outputs (recordings, datasets, checkpoints live in C:\mywork\osm2carla\build\nurec\)
+logs/
+out/
+*.pt

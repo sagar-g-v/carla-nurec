@@ -1,0 +1,7 @@
+{
+ "rotation": "ue",
+ "rotation_evidence": "convention_check.py on convention_probe.py renders (2026-10-28): sky IoU H_ue 0.95-0.98 vs H_client 0.35-0.62 over 6 pitch/yaw/roll cases; lidar road points flat at z 83.215 (std 0.171 m) under H_ue vs std 4.29 m under H_client. The carla wheel's client-side Transform.get_matrix()/get_forward_vector() of this ue5-dev build use the opposite pitch/roll sign and must not be used for geometry.",
+ "lidar_axes": [1.0, 1.0, 1.0],
+ "lidar_axes_evidence": "lidar points vs depth-camera points at the same pose, sensor frame: median NN 0.056 m as is, 4.34 m with y negated, 6.93 m with x negated",
+ "inst_id": "see instance_map.json of each recording (instance ids are not actor ids in this build)"
+}
