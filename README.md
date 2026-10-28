@@ -27,6 +27,7 @@ scenario/rig.json         camera / lidar rig
 convert/                  measured CARLA conventions, instance-id map, raw -> PNG, dataset, NCore V4 export
 recon/model.py, train.py  composite 3DGUT model (gsplat): background + per-actor Gaussians + sky, trainer
 evaluate/                 evaluation, exposure check, report generator, actor debug renders
+viewer/                   interactive viewer: the reconstruction rendered live next to CARLA's ground truth
 cloud/                    NuRec run script + notes for a Linux GPU machine (not run here)
 run_carla.ps1             CARLA server (-game, off-screen) -> client jobs -> server stopped (also on failure)
 run_pipeline.ps1          everything after planning
@@ -44,3 +45,18 @@ Requirements: CARLA 0.10 UE5 source build with the `LA_DTLA_ODR` map; the CARLA 
 ```
 
 Outputs (recordings, datasets, NCore, checkpoints, evaluation) go to `-Build`, outside the repository.
+
+## Viewer
+
+```powershell
+.\.venv\Scripts\python.exe viewer\serve.py C:\mywork\osm2carla\build\nurec\ds04 C:\mywork\osm2carla\build\nurec\train04b\ckpt.pt --novel C:\mywork\osm2carla\build\nurec\novel04
+```
+
+Then open http://127.0.0.1:8765/. A local server renders the checkpoint on the GPU (about 30 ms per 640 x 360 or
+1280 x 720 frame on the RTX 4050) for any of the six rig cameras at any tick, moved and turned freely from there
+(drag, W A S D, Q / E). It shows RGB, depth or the error image, with the dynamic actors switched on or off, and
+CARLA's 3D boxes as an overlay. Where CARLA rendered exactly the shown pose, the ground truth is shown beside the
+reconstruction with its raw PSNR at the shown resolution: the rig cameras at every tick, and the front camera at
+-3 ... +3 m beside the path every 4th tick.
+
+![viewer](docs/img/viewer.jpg)

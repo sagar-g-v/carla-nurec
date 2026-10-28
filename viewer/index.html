@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reconstruction Viewer</title>
+<style>
+  :root { --bg: #121417; --panel: #1b1e23; --line: #2c3139; --text: #e4e7eb; --dim: #9aa3ad; --accent: #4da3ff; --warn: #ffdc00; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  header { padding: 12px 16px 4px; display: flex; flex-wrap: wrap; gap: 4px 16px; align-items: baseline; }
+  h1 { font-size: 16px; margin: 0; font-weight: 600; }
+  header .sub { color: var(--dim); font-size: 13px; }
+  main { padding: 8px 16px 16px; }
+  .views { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+  .view { background: var(--panel); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+  .view .cap { padding: 6px 10px; font-size: 13px; color: var(--dim); display: flex; justify-content: space-between; gap: 8px; min-height: 31px; }
+  .view .cap b { color: var(--text); font-weight: 600; }
+  .frame { position: relative; aspect-ratio: 16 / 9; background: #000; }
+  .frame img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; display: block; }
+  #recon { cursor: grab; touch-action: none; }
+  #recon:active { cursor: grabbing; }
+  .none { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; color: var(--dim); font-size: 13px; }
+  .controls { margin-top: 12px; display: grid; gap: 10px; }
+  .row { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; }
+  label { color: var(--dim); display: inline-flex; gap: 6px; align-items: center; }
+  select, button { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 5px; padding: 5px 9px; font: inherit; }
+  button { cursor: pointer; }
+  button:hover, select:hover { border-color: #46505c; }
+  button.on { border-color: var(--accent); color: var(--accent); }
+  input[type=range] { flex: 1; min-width: 160px; accent-color: var(--accent); }
+  .tickrow { gap: 10px; }
+  #ticklabel { min-width: 170px; font-variant-numeric: tabular-nums; }
+  .badge { font-size: 12px; padding: 1px 6px; border-radius: 4px; border: 1px solid var(--line); color: var(--dim); }
+  .badge.test { border-color: var(--accent); color: var(--accent); }
+  .seg { display: inline-flex; }
+  .seg button { border-radius: 0; margin-left: -1px; }
+  .seg button:first-child { border-radius: 5px 0 0 5px; margin-left: 0; }
+  .seg button:last-child { border-radius: 0 5px 5px 0; }
+  .info { color: var(--dim); font-size: 13px; font-variant-numeric: tabular-nums; }
+  .help { color: var(--dim); font-size: 12px; }
+  kbd { border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 3px; padding: 0 4px; font: 12px ui-monospace, monospace; color: var(--text); }
+  #err { color: #ff7b72; }
+  .legend { display: none; align-items: center; gap: 6px; font-size: 12px; color: var(--dim); }
+  .legend i { width: 120px; height: 8px; border-radius: 2px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Reconstruction vs CARLA</h1>
+  <span class="sub" id="sub">loading...</span>
+</header>
+<main>
+  <div class="views">
+    <div class="view">
+      <div class="cap"><span><b>Reconstruction</b> <span id="rcap"></span></span><span id="ms"></span></div>
+      <div class="frame"><img id="recon" alt="reconstruction" draggable="false"></div>
+    </div>
+    <div class="view">
+      <div class="cap"><span><b>CARLA ground truth</b> <span id="gcap"></span></span><span id="psnr"></span></div>
+      <div class="frame"><img id="gt" alt="CARLA ground truth"><div class="none" id="nogt">
+        No CARLA image at this pose. CARLA rendered the six rig cameras at every tick, and the front camera
+        at -3 ... +3 m beside the path every 4th tick (buttons below).</div></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <div class="row tickrow">
+      <button id="play" title="Space">Play</button>
+      <button id="prev" title=",">&lsaquo;</button><button id="next" title=".">&rsaquo;</button>
+      <input type="range" id="tick" min="0" max="200" value="0">
+      <span id="ticklabel"></span>
+    </div>
+    <div class="row">
+      <label>Camera <select id="cam"></select></label>
+      <label><input type="checkbox" id="follow" checked> follow the ego</label>
+      <span class="seg" id="modes"><button data-m="rgb" class="on">RGB</button><button data-m="depth">Depth</button><button data-m="error">Error</button></span>
+      <span class="legend" id="legend">near <i id="lgbar"></i> 150 m</span>
+      <label><input type="checkbox" id="actors" checked> dynamic actors</label>
+      <label><input type="checkbox" id="boxes"> CARLA 3D boxes</label>
+      <label><input type="checkbox" id="hq"> 1280 x 720</label>
+      <button id="reset" title="R">Reset view</button>
+    </div>
+    <div class="row">
+      <span class="info">Novel views (front camera, beside the driven path):</span>
+      <span class="seg" id="offs"></span>
+    </div>
+    <div class="info" id="pose"></div>
+    <div class="help">Drag the left image to look around (the picture follows the pointer). <kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> or arrows: move,
+      <kbd>Q</kbd>/<kbd>E</kbd>: down / up, <kbd>Shift</kbd>: faster, wheel: forward / back, <kbd>Space</kbd>: play,
+      <kbd>,</kbd>/<kbd>.</kbd>: step, <kbd>R</kbd>: reset. Untick "follow the ego" to keep the camera fixed while time runs.
+      The ground truth and PSNR appear only where CARLA rendered exactly the shown pose. PSNR is raw (no exposure
+      alignment), ego pixels excluded.</div>
+    <div id="err"></div>
+  </div>
+</main>
+<script>
+const $ = id => document.getElementById(id);
+const st = { cam: "CAM_FRONT", tick: 0, ref: 0, follow: true, tx: 0, ty: 0, tz: 0, yaw: 0, pitch: 0,
+             mode: "rgb", actors: true, boxes: false, hq: false, playing: false };
+let M = null, inflight = false, dirty = true, lastT = performance.now(), lastStep = 0;
+const keys = new Set();
+
+function fmt(v, d = 2) { return (v >= 0 ? "+" : "") + v.toFixed(d); }
+function setTick(t) {
+  st.tick = Math.max(M.ticks[0], Math.min(M.ticks[1], t));
+  if (st.follow) st.ref = st.tick;
+  $("tick").value = st.tick; dirty = true; tickLabel();
+}
+function novelOffset() {                                                   // a re-simulated side offset is selected
+  return st.cam === "CAM_FRONT" && st.tx !== 0 && M.offsets.includes(st.tx) && !st.ty && !st.tz && !st.yaw && !st.pitch && st.follow;
+}
+function step(dir) {                                                       // on a novel offset: the ticks CARLA rendered
+  if (!novelOffset()) return setTick(st.tick + dir);
+  const n = M.novel_ticks, t = dir > 0 ? n.find(v => v > st.tick) : [...n].reverse().find(v => v < st.tick);
+  setTick(t === undefined ? (dir > 0 ? n[0] : n[n.length - 1]) : t);
+}
+function tickLabel() {
+  const test = M.test_ticks.includes(st.tick);
+  $("ticklabel").innerHTML = `tick ${st.tick} / ${M.ticks[1]} &middot; ${(st.tick * M.dt).toFixed(1)} s ` +
+    (test ? '<span class="badge test">held-out tick</span>' : '<span class="badge">training tick</span>');
+}
+function resetView() { st.tx = st.ty = st.tz = st.yaw = st.pitch = 0; st.ref = st.tick; st.follow = true; $("follow").checked = true; dirty = true; }
+function move(r, u, f) {
+  const a = st.yaw * Math.PI / 180;
+  st.tx += r * Math.cos(a) - f * Math.sin(a);
+  st.tz += r * Math.sin(a) + f * Math.cos(a);
+  st.ty += u; dirty = true;
+}
+
+function labels(info, s) {                                                // s: the state this image was rendered for
+  const moved = [s.tx, s.ty, s.tz, s.yaw, s.pitch].some(v => Math.abs(v) > 1e-9);
+  let p = `Camera: ${s.cam} of tick ${s.ref}` + (s.follow ? "" : " (fixed in the world)") + `, actors at tick ${s.tick}`;
+  if (moved) p += `, moved right ${fmt(s.tx)} m, up ${fmt(s.ty)} m, forward ${fmt(s.tz)} m, yaw ${fmt(s.yaw, 1)}&deg;, pitch ${fmt(s.pitch, 1)}&deg;`;
+  if (info) p += ` &middot; CARLA position x ${info.x}, y ${info.y}, z ${info.z}`;
+  $("pose").innerHTML = p;
+  document.querySelectorAll("#offs button").forEach(b => {
+    const o = +b.dataset.o;
+    b.classList.toggle("on", s.cam === "CAM_FRONT" && Math.abs(s.tx - o) < 1e-9 && !s.ty && !s.tz && !s.yaw && !s.pitch && s.follow);
+  });
+}
+
+async function request() {
+  inflight = true; dirty = false;
+  const s = { ...st };
+  const q = new URLSearchParams({ cam: s.cam, tick: s.tick, ref: s.ref, tx: s.tx, ty: s.ty, tz: s.tz, yaw: s.yaw,
+    pitch: s.pitch, mode: s.mode, actors: s.actors ? 1 : 0, boxes: s.boxes ? 1 : 0, hq: s.hq ? 1 : 0 });
+  try {
+    const r = await fetch("/render?" + q);
+    if (!r.ok) throw new Error(await r.text());
+    const j = await r.json();
+    $("recon").src = j.recon;
+    $("gt").style.display = j.gt ? "block" : "none"; $("nogt").style.display = j.gt ? "none" : "flex";
+    if (j.gt) $("gt").src = j.gt;
+    $("gcap").textContent = j.info.gt ? "- " + j.info.gt : "";
+    $("psnr").textContent = j.info.psnr !== undefined ? `PSNR ${j.info.psnr.toFixed(2)} dB` : "";
+    $("ms").textContent = `${j.info.ms} ms`;
+    $("rcap").textContent = s.mode === "error" ? (j.gt ? "- |reconstruction - CARLA| x 4" : "- error needs a ground-truth pose") : "";
+    $("err").textContent = "";
+    labels(j.info, s);
+  } catch (e) { $("err").textContent = "Render failed: " + e.message; }
+  inflight = false;
+}
+
+function loop(now) {
+  const dt = Math.min(0.1, (now - lastT) / 1000); lastT = now;
+  const sp = (keys.has("shift") ? 10 : 3) * dt;
+  if (keys.has("w") || keys.has("arrowup")) move(0, 0, sp);
+  if (keys.has("s") || keys.has("arrowdown")) move(0, 0, -sp);
+  if (keys.has("d") || keys.has("arrowright")) move(sp, 0, 0);
+  if (keys.has("a") || keys.has("arrowleft")) move(-sp, 0, 0);
+  if (keys.has("e")) move(0, sp, 0);
+  if (keys.has("q")) move(0, -sp, 0);
+  if (st.playing && !inflight && now - lastStep >= 1000 * M.dt * (novelOffset() ? 4 : 1)) {
+    step(1); lastStep = now;
+  }
+  if (dirty && !inflight) request();
+  requestAnimationFrame(loop);
+}
+
+function setPlaying(p) { st.playing = p; $("play").textContent = p ? "Pause" : "Play"; $("play").classList.toggle("on", p); }
+
+async function init() {
+  M = await (await fetch("/meta")).json();
+  const n = Object.values(M.gaussians).reduce((a, b) => a + b, 0);
+  $("sub").textContent = `checkpoint ${M.ckpt} - ${(n / 1e6).toFixed(2)} M Gaussians (background ${(M.gaussians.bg / 1e6).toFixed(2)} M, ` +
+    `${Object.keys(M.actors).length} dynamic actors) - trained at ${M.W} x ${M.H}`;
+  $("tick").min = M.ticks[0]; $("tick").max = M.ticks[1];
+  M.cams.forEach(c => { const o = document.createElement("option"); o.value = o.textContent = c; $("cam").appendChild(o); });
+  $("cam").value = st.cam;
+  M.offsets.forEach(o => {
+    const b = document.createElement("button"); b.dataset.o = o; b.textContent = (o > 0 ? "+" : "") + o + " m";
+    b.onclick = () => {
+      resetView(); st.cam = "CAM_FRONT"; $("cam").value = st.cam; st.tx = o;
+      if (!M.novel_ticks.includes(st.tick)) setTick(M.novel_ticks.reduce((a, t) => Math.abs(t - st.tick) < Math.abs(a - st.tick) ? t : a));
+      dirty = true; b.blur();
+    };
+    $("offs").appendChild(b);
+  });
+  if (!M.offsets.length) $("offs").parentElement.style.display = "none";
+  $("lgbar").style.background = "linear-gradient(90deg, #7a0403, #fb8022, #a2fc3c, #28bceb, #30123b)";
+  tickLabel(); labels(null, st);
+  requestAnimationFrame(loop);
+}
+
+$("tick").oninput = e => setTick(+e.target.value);
+$("prev").onclick = () => step(-1);
+$("next").onclick = () => step(1);
+$("play").onclick = () => setPlaying(!st.playing);
+$("cam").onchange = e => { st.cam = e.target.value; resetView(); e.target.blur(); };
+$("follow").onchange = e => { st.follow = e.target.checked; if (st.follow) st.ref = st.tick; dirty = true; };
+$("actors").onchange = e => { st.actors = e.target.checked; dirty = true; };
+$("boxes").onchange = e => { st.boxes = e.target.checked; dirty = true; };
+$("hq").onchange = e => { st.hq = e.target.checked; dirty = true; };
+$("reset").onclick = () => resetView();
+document.querySelectorAll("#modes button").forEach(b => b.onclick = () => {
+  st.mode = b.dataset.m; dirty = true;
+  document.querySelectorAll("#modes button").forEach(x => x.classList.toggle("on", x === b));
+  $("legend").style.display = st.mode === "depth" ? "inline-flex" : "none"; b.blur();
+});
+
+let drag = null;
+$("recon").addEventListener("pointerdown", e => { drag = [e.clientX, e.clientY]; $("recon").setPointerCapture(e.pointerId); });
+$("recon").addEventListener("pointermove", e => {
+  if (!drag) return;
+  const k = 90 / $("recon").clientWidth;                                   // the picture follows the pointer (90 deg FOV)
+  st.yaw += (e.clientX - drag[0]) * k; st.pitch = Math.max(-80, Math.min(80, st.pitch + (e.clientY - drag[1]) * k));
+  drag = [e.clientX, e.clientY]; dirty = true;
+});
+$("recon").addEventListener("pointerup", () => drag = null);
+$("recon").addEventListener("wheel", e => { e.preventDefault(); move(0, 0, -Math.sign(e.deltaY) * 0.5); }, { passive: false });
+
+const HANDLED = new Set(["w", "a", "s", "d", "q", "e", "arrowup", "arrowdown", "arrowleft", "arrowright", "shift"]);
+addEventListener("keydown", e => {
+  if (e.target.tagName === "SELECT" || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.toLowerCase();
+  if (HANDLED.has(k)) {
+    keys.add(k); e.preventDefault();
+    const tap = { w: [0, 0, 1], arrowup: [0, 0, 1], s: [0, 0, -1], arrowdown: [0, 0, -1], d: [1, 0, 0], arrowright: [1, 0, 0],
+                  a: [-1, 0, 0], arrowleft: [-1, 0, 0], e: [0, 1, 0], q: [0, -1, 0] }[k];
+    if (tap && !e.repeat) move(...tap.map(v => v * 0.25));                 // a short tap moves 25 cm
+  }
+  else if (k === " ") { setPlaying(!st.playing); e.preventDefault(); }
+  else if (k === ",") step(-1);
+  else if (k === ".") step(1);
+  else if (k === "r") resetView();
+});
+addEventListener("keyup", e => keys.delete(e.key.toLowerCase()));
+addEventListener("blur", () => keys.clear());
+init().catch(e => { $("err").textContent = "Could not reach the viewer server: " + e.message; });
+</script>
+</body>
+</html>

@@ -6,3 +6,5 @@ __pycache__/
 logs/
 out/
 *.pt
+# local code graph (graphify)
+graphify-out/
