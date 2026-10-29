@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CARLA Scenario Replay</title>
+<style>
+  :root { --bg:#0e1116; --panel:#171b22d9; --fg:#e6e9ef; --muted:#9aa3b2; --accent:#4fd1a5; }
+  html,body { margin:0; height:100%; background:var(--bg); color:var(--fg); font:13px/1.4 system-ui,sans-serif; overflow:hidden; }
+  #app { position:fixed; inset:0; }
+  .panel { position:fixed; background:var(--panel); backdrop-filter:blur(6px); border:1px solid #ffffff14; border-radius:10px; padding:10px 12px; }
+  #info { top:12px; left:12px; max-width:320px; }
+  #info h1 { font-size:14px; margin:0 0 4px; }
+  .muted { color:var(--muted); font-size:12px; }
+  #legend span { display:inline-flex; align-items:center; gap:4px; margin-right:8px; font-size:12px; }
+  #legend i { width:10px; height:10px; border-radius:2px; display:inline-block; }
+  #metrics { margin-top:6px; font-size:12px; font-variant-numeric:tabular-nums; }
+  #controls { left:12px; right:12px; bottom:12px; display:flex; gap:8px 10px; align-items:center; flex-wrap:wrap; }
+  #controls input[type=range] { accent-color:var(--accent); }
+  #scrub { flex:1; min-width:160px; }
+  button,select { background:#232936; color:var(--fg); border:1px solid #ffffff22; border-radius:6px; padding:5px 10px; font:inherit; cursor:pointer; }
+  label { display:inline-flex; align-items:center; gap:4px; white-space:nowrap; }
+  #time { font-variant-numeric:tabular-nums; min-width:150px; }
+  .badge { font-size:11px; padding:0 5px; border-radius:4px; border:1px solid #ffffff33; color:var(--muted); margin-left:4px; }
+  .badge.test { border-color:var(--accent); color:var(--accent); }
+  #cam { top:12px; right:12px; width:min(380px,36vw); padding:6px; }
+  #cam .bar { display:flex; gap:6px; padding:0 2px 6px; }
+  #cam .bar select { padding:3px 6px; flex:1; }
+  #cam figure { margin:0 0 4px; position:relative; }
+  #cam img { width:100%; aspect-ratio:16/9; border-radius:6px; display:block; background:#000; object-fit:cover; }
+  #cam figcaption { position:absolute; left:6px; top:5px; font-size:11px; background:#000a; padding:1px 6px; border-radius:4px; }
+  #camcap { padding:2px 2px 0; }
+  #offwrap { display:none; }
+  #offwrap input { width:110px; }
+  #loading { position:fixed; inset:0; display:grid; place-items:center; color:var(--muted); pointer-events:none; font-size:14px; }
+  #help { position:fixed; left:12px; bottom:64px; font-size:11px; color:var(--muted); background:#0e1116aa; padding:3px 8px; border-radius:6px; }
+  #info h1 { cursor:pointer; user-select:none; }
+  #info h1::after { content:" \25BE"; color:var(--muted); font-weight:400; }
+  #info.collapsed h1::after { content:" \25B8"; }
+  #info.collapsed .details { display:none; }
+  @media (max-width: 760px) {
+    #info { max-width:calc(50vw - 18px); padding:8px 10px; }
+    #cam { width:calc(50vw - 18px); }
+    #cam .bar { flex-direction:column; }
+    #help { display:none; }
+  }
+</style>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+  "@mkkellogg/gaussian-splats-3d": "https://cdn.jsdelivr.net/npm/@mkkellogg/gaussian-splats-3d@0.4.7/build/gaussian-splats-3d.module.js"
+} }
+</script>
+</head>
+<body>
+<div id="app"></div>
+<div id="loading">Loading scene...</div>
+<div id="info" class="panel">
+  <h1 id="infotitle" title="Show / hide details">CARLA scenario replay</h1>
+  <div class="details">
+  <div class="muted" id="sub"></div>
+  <div class="muted" id="recinfo"></div>
+  <div id="legend" style="margin-top:6px">
+    <span><i style="background:#4fd1a5"></i>ego</span>
+    <span><i style="background:#5b9cff"></i>car</span>
+    <span><i style="background:#ff6b6b"></i>pedestrian</span>
+    <span><i style="background:#ffb84d"></i>cyclist</span>
+    <span><i style="background:#8b95a5"></i>parked</span>
+  </div>
+  <div id="metrics"></div>
+  <div class="muted" style="margin-top:6px">Scene points: the drive's static lidar points, coloured from the cameras.
+    The camera panel shows CARLA's image and the trained 3DGUT model's own render. "Splats (approx.)" draws the same
+    Gaussians with standard splatting in the browser; that does not reproduce this 3DGUT model (front camera:
+    7-9 dB against the model's renders), so it is only a rough preview.</div>
+  </div>
+</div>
+<div id="cam" class="panel">
+  <div class="bar">
+    <select id="camsel"></select>
+    <select id="panelmode"><option value="both" selected>CARLA + reconstruction</option><option value="carla">CARLA only</option><option value="recon">Reconstruction only</option></select>
+  </div>
+  <figure id="fig_carla"><img id="img_carla" alt="CARLA camera image"><figcaption>CARLA</figcaption></figure>
+  <figure id="fig_recon"><img id="img_recon" alt="Reconstruction render"><figcaption>Reconstruction</figcaption></figure>
+  <div class="muted" id="camcap"></div>
+</div>
+<div id="help">Drag: orbit · right-drag: pan · wheel: zoom · Space: play · , / . : step one tick</div>
+<div id="controls" class="panel">
+  <button id="play">&#9654; Play</button>
+  <input id="scrub" type="range" min="0" max="1" step="0.01" value="0">
+  <span id="time">0.00 s</span>
+  <select id="speed"><option>0.25</option><option>0.5</option><option selected>1</option><option>2</option></select>
+  <select id="view"><option value="chase" selected>Chase cam</option><option value="top">Top-down</option><option value="orbit">Free orbit</option><option value="camera">Through the camera</option></select>
+  <span id="offwrap"><label>side offset <input id="off" type="range" min="-3" max="3" step="1" value="0"> <span id="offval">0 m</span></label></span>
+  <label><input type="checkbox" id="points" checked> scene points</label>
+  <label title="Approximate: standard splatting does not reproduce this 3DGUT model (see the info panel)"><input type="checkbox" id="splats"> splats (approx.)</label>
+  <label><input type="checkbox" id="actorsplats" checked> moving actors</label>
+  <label><input type="checkbox" id="boxes" checked> boxes</label>
+  <label><input type="checkbox" id="trails" checked> trails</label>
+  <label><input type="checkbox" id="map" checked> map</label>
+  <label><input type="checkbox" id="lidar"> lidar sweep</label>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import * as GS from '@mkkellogg/gaussian-splats-3d';
+
+const $ = id => document.getElementById(id);
+const data = await (await fetch('scene.json')).json();
+const DT = data.dt, NT = data.ticks.length;
+
+// ---------------------------------------------------------------- renderer, camera
+THREE.Object3D.DEFAULT_UP.set(0, 0, 1);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0e1116);
+const renderer = new THREE.WebGLRenderer({ antialias: false });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+$('app').appendChild(renderer.domElement);
+const camera = new THREE.PerspectiveCamera(55, 1, 0.1, 6000);
+camera.up.set(0, 0, 1);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+scene.add(new THREE.HemisphereLight(0xdfe8ff, 0x30281e, 1.1));
+const sun = new THREE.DirectionalLight(0xffffff, 1.4); sun.position.set(80, -60, 120); scene.add(sun);
+function resize() {
+  renderer.setSize(innerWidth, innerHeight);
+  camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+// ---------------------------------------------------------------- static scene points: the drive's lidar, camera colours
+const scenePoints = await (async () => {
+  const buf = await (await fetch('scene_points.bin')).arrayBuffer(), n = data.scene_points;
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Int16BufferAttribute(new Int16Array(buf, 0, n * 3), 3));
+  g.setAttribute('color', new THREE.Uint8BufferAttribute(new Uint8Array(buf, n * 6, n * 3), 3, true));
+  g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e7);
+  const p = new THREE.Points(g, new THREE.PointsMaterial({ size: 0.14, vertexColors: true }));
+  p.scale.setScalar(0.01); p.frustumCulled = false; scene.add(p);
+  return p;
+})();
+
+// ---------------------------------------------------------------- pose samples: [x, y, z, qx, qy, qz, qw] per tick
+const _qa = new THREE.Quaternion(), _qb = new THREE.Quaternion();
+function poseAt(arr, t, pos, quat) {
+  const f = Math.max(0, Math.min(NT - 1, t / DT)), i = Math.floor(f), a = arr[i], b = arr[Math.min(i + 1, NT - 1)] || a;
+  if (!a) return false;
+  const w = f - i;
+  pos.set(a[0] + (b[0] - a[0]) * w, a[1] + (b[1] - a[1]) * w, a[2] + (b[2] - a[2]) * w);
+  quat.copy(_qa.set(a[3], a[4], a[5], a[6])).slerp(_qb.set(b[3], b[4], b[5], b[6]), w);
+  return true;
+}
+const clsOf = a => /walk|ped/i.test(a.cls + a.kind) ? 'ped' : /bike|cycl/i.test(a.cls + a.kind) ? 'bike' : 'car';
+const COLOR = { ego: 0x4fd1a5, car: 0x5b9cff, ped: 0xff6b6b, bike: 0xffb84d, parked: 0x8b95a5 };
+
+// ---------------------------------------------------------------- boxes and trails
+function makeBox(size, color, solid) {
+  const g = new THREE.BoxGeometry(...size), grp = new THREE.Group();
+  const faces = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color, roughness: 0.6 }));
+  faces.visible = solid; grp.add(faces);
+  grp.add(new THREE.LineSegments(new THREE.EdgesGeometry(g), new THREE.LineBasicMaterial({ color: solid ? 0xffffff : color })));
+  const nose = new THREE.Mesh(new THREE.BoxGeometry(0.25, size[1] * 0.6, 0.12), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+  nose.position.set(size[0] / 2, 0, size[2] / 2 - 0.08); grp.add(nose);
+  grp.userData.faces = faces;
+  return grp;
+}
+function makeTrail(arr, color, dz) {
+  const pts = arr.filter(Boolean).map(p => new THREE.Vector3(p[0], p[1], p[2] - dz));
+  const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color }));
+  scene.add(l); return l;
+}
+const egoBox = makeBox(data.ego.size, COLOR.ego, true); scene.add(egoBox);
+const trails = [makeTrail(data.ego.box, COLOR.ego, data.ego.size[2] / 2 - 0.15)];
+const agents = data.actors.map(a => {
+  const kind = a.dynamic ? clsOf(a) : 'parked';
+  const box = makeBox(a.size, COLOR[kind], false); scene.add(box);
+  if (a.dynamic) trails.push(makeTrail(a.box, COLOR[kind], a.size[2] / 2 - 0.1));
+  return { a, kind, box };
+});
+
+// ---------------------------------------------------------------- map layers (OpenDRIVE)
+const mapGroup = new THREE.Group(); scene.add(mapGroup);
+function addLines(lines, mat, dz = 0.1) {
+  const pts = [];
+  for (const pl of lines) for (let i = 0; i < pl.length - 1; i++)
+    pts.push(pl[i][0], pl[i][1], pl[i][2] + dz, pl[i + 1][0], pl[i + 1][1], pl[i + 1][2] + dz);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+  const l = new THREE.LineSegments(g, mat); if (mat.isLineDashedMaterial) l.computeLineDistances();
+  mapGroup.add(l);
+}
+const L = data.layers;
+addLines(L.lane, new THREE.LineBasicMaterial({ color: 0x4a5462 }));
+addLines(L.junction_lane, new THREE.LineBasicMaterial({ color: 0x39414c }));
+addLines(L.road_boundary, new THREE.LineBasicMaterial({ color: 0xff9f43 }));
+addLines(L.crosswalk, new THREE.LineBasicMaterial({ color: 0xffffff }), 0.12);
+for (const [col, hex] of [['white', 0xf2f2f2], ['yellow', 0xffd34d]]) {
+  addLines(L.lane_line.filter(l => l.color === col && !/broken/.test(l.type)).map(l => l.p), new THREE.LineBasicMaterial({ color: hex }));
+  addLines(L.lane_line.filter(l => l.color === col && /broken/.test(l.type)).map(l => l.p),
+           new THREE.LineDashedMaterial({ color: hex, dashSize: 3, gapSize: 6 }));
+}
+
+// ---------------------------------------------------------------- camera rig and frustum
+const camNames = Object.keys(data.cams);
+camNames.forEach(c => { const o = document.createElement('option'); o.value = o.textContent = c; $('camsel').appendChild(o); });
+const RIGCAM = Object.fromEntries(camNames.map(c => [c, new THREE.Matrix4().fromArray(data.cams[c].T_rig_cam.flat()).transpose()]));
+const CV_TO_GL = new THREE.Matrix4().makeScale(1, -1, -1);              // OpenCV camera axes -> three.js camera axes
+const frustum = (() => {
+  const d = 3, hw = d, hh = d * 9 / 16, p = [[0, 0, 0], [-hw, -hh, d], [hw, -hh, d], [hw, hh, d], [-hw, hh, d]];
+  const e = [0, 1, 0, 2, 0, 3, 0, 4, 1, 2, 2, 3, 3, 4, 4, 1].map(i => p[i]).flat();
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(e, 3));
+  const l = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0xffe14d })); l.matrixAutoUpdate = false;
+  scene.add(l); return l;
+})();
+const _rig = new THREE.Matrix4(), _p = new THREE.Vector3(), _q = new THREE.Quaternion(), _one = new THREE.Vector3(1, 1, 1);
+function camWorld(t, cam, offset) {                                     // OpenCV camera -> local world
+  poseAt(data.ego.rig, t, _p, _q); _rig.compose(_p, _q, _one);
+  const M = _rig.clone().multiply(RIGCAM[cam]);
+  if (offset) M.multiply(new THREE.Matrix4().makeTranslation(offset, 0, 0));
+  return M;
+}
+
+// ---------------------------------------------------------------- lidar (loaded on demand)
+const SEM = [[0,0,0],[128,64,128],[244,35,232],[70,70,70],[102,102,156],[190,153,153],[153,153,153],[250,170,30],
+  [220,220,0],[107,142,35],[152,251,152],[70,130,180],[220,20,60],[255,0,0],[0,0,142],[0,0,70],[0,60,100],[0,80,100],
+  [0,0,230],[119,11,32],[110,190,160],[170,120,50],[55,90,80],[45,60,150],[157,234,50],[81,0,81],[150,100,100],
+  [230,150,140],[180,165,180]];
+let lidar = null;
+const lidarStart = data.lidar.counts.reduce((acc, n, i) => (acc.push(acc[i] + n), acc), [0]);
+async function loadLidar() {
+  const buf = await (await fetch('lidar.bin')).arrayBuffer(), n = lidarStart[NT];
+  const xyz = new Int16Array(buf, 0, n * 3), tag = new Uint8Array(buf, n * 6, n), col = new Uint8Array(n * 3);
+  for (let i = 0; i < n; i++) { const c = SEM[tag[i]] || [255, 255, 255]; col[3 * i] = c[0]; col[3 * i + 1] = c[1]; col[3 * i + 2] = c[2]; }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Int16BufferAttribute(xyz, 3));
+  g.setAttribute('color', new THREE.Uint8BufferAttribute(col, 3, true));
+  g.boundingSphere = new THREE.Sphere(new THREE.Vector3(), 1e7);
+  lidar = new THREE.Points(g, new THREE.PointsMaterial({ size: 2, sizeAttenuation: false, vertexColors: true }));
+  lidar.scale.setScalar(0.01); lidar.frustumCulled = false; scene.add(lidar);
+}
+
+// ---------------------------------------------------------------- Gaussian splats
+const iso = self.crossOriginIsolated;
+const splat = new GS.DropInViewer({ gpuAcceleratedSort: iso, sharedMemoryForWorkers: iso, integerBasedSort: false,
+  dynamicScene: true, sceneRevealMode: GS.SceneRevealMode.Instant, sphericalHarmonicsDegree: 0, antialiased: false,
+  logLevel: GS.LogLevel.None });
+const sceneIndex = Object.fromEntries(data.splats.map((s, i) => [s.group, i]));
+const nG = data.splats.reduce((a, s) => a + s.n, 0), nFar = data.splats.reduce((a, s) => a + (s.left_out_far || 0), 0);
+let splatsReady = false, splatsRequested = false;
+function loadSplats() {                                                 // on first use only
+  if (splatsRequested) return;
+  splatsRequested = true;
+  $('loading').style.display = 'grid'; $('loading').textContent = `Loading the splats (${(nG / 1e6).toFixed(2)} M Gaussians)...`;
+  splat.addSplatScenes(data.splats.map(s => ({ path: s.file, format: GS.SceneFormat.Splat, splatAlphaRemovalThreshold: 3 })), false)
+    .then(() => { splatsReady = true; $('loading').style.display = 'none'; })
+    .catch(e => { $('loading').textContent = 'Could not load the splats: ' + e; });
+}
+splat.visible = false; scene.add(splat);
+$('loading').style.display = 'none';
+const actorScenes = agents.filter(g => g.a.splat).map(g => ({ g, idx: sceneIndex[String(g.a.id)] }));
+
+// ---------------------------------------------------------------- info panel
+if (innerWidth < 760) $('info').classList.add('collapsed');
+$('infotitle').onclick = () => $('info').classList.toggle('collapsed');
+const M = data.metrics, h = M.heldout;
+$('sub').textContent = `${data.map} · junction 10295 · ${data.duration.toFixed(1)} s at ${Math.round(1 / DT)} Hz · ${data.actors.length} actors + ego`;
+$('recinfo').textContent = `Reconstruction ${data.ckpt.name}: ${((nG + nFar) / 1e6).toFixed(2)} M Gaussians (3DGUT), ` +
+  `${data.ckpt.iterations.toLocaleString()} iterations, ${(data.ckpt.elapsed_s / 60).toFixed(0)} min on the laptop; ` +
+  `${(nG / 1e6).toFixed(2)} M drawn here (${(nFar / 1e3).toFixed(0)} k beyond the model's far plane left out)`;
+const nov = M.novel;
+$('metrics').innerHTML = `Held-out views (${h.n}): <b>${h.raw.psnr.toFixed(2)} dB</b> · SSIM ${h.raw.ssim.toFixed(3)} · LPIPS ${h.raw.lpips.toFixed(3)}<br>` +
+  `Novel views ±1 / ±2 / ±3 m: ${['1', '2', '3'].map(o => ((nov['-' + o].raw.psnr + nov['+' + o].raw.psnr) / 2).toFixed(1)).join(' / ')} dB` +
+  (M.depth ? `<br>Depth AbsRel ${M.depth.absrel.toFixed(3)} · median error ${M.depth.median_abs.toFixed(2)} m` : '');
+
+// ---------------------------------------------------------------- camera panel
+const test = new Set(data.test_ticks);
+let shownKey = '';
+function panelImage(el, url) { const im = new Image(); im.src = url; im.decode().then(() => { el.src = url; }).catch(() => {}); }
+function updatePanel(t) {
+  const k = Math.round(t / DT), cam = $('camsel').value, off = $('view').value === 'camera' ? +$('off').value : 0;
+  let key, carla, recon, cap;
+  if (off !== 0 && cam === 'CAM_FRONT' && data.novel) {
+    const nt = data.novel.ticks, j = nt.reduce((b, v, i) => Math.abs(v - k) < Math.abs(nt[b] - k) ? i : b, 0);
+    const o = (off > 0 ? '+' : '') + off;
+    key = `n${o}/${nt[j]}`; carla = `novel/${o}/carla/${String(nt[j]).padStart(4, '0')}.jpg`; recon = carla.replace('/carla/', '/recon/');
+    cap = `Front camera ${o} m beside the driven path · CARLA re-simulation tick ${nt[j]} · PSNR ${data.novel.psnr[o][j].toFixed(2)} dB`;
+  } else {
+    const s = String(k).padStart(4, '0');
+    key = `${cam}/${k}`; carla = `img/${cam}/carla/${s}.jpg`; recon = `img/${cam}/recon/${s}.jpg`;
+    cap = `${cam} · tick ${k} ` + (test.has(k) ? '<span class="badge test">held-out view</span>' : '<span class="badge">training view</span>') +
+      ` · PSNR ${data.psnr[cam][k].toFixed(2)} dB` + (off ? ' · CARLA images beside the path exist for the front camera only' : '');
+  }
+  if (key === shownKey) return;
+  shownKey = key;
+  panelImage($('img_carla'), carla); panelImage($('img_recon'), recon);
+  $('camcap').innerHTML = cap + '<br>PSNR raw (no exposure alignment), ego pixels excluded, 640 x 360';
+}
+$('panelmode').onchange = e => { $('fig_carla').style.display = e.target.value === 'recon' ? 'none' : ''; $('fig_recon').style.display = e.target.value === 'carla' ? 'none' : ''; };
+
+// ---------------------------------------------------------------- playback and views
+let t = 0, playing = false, last = performance.now(), firstFrameOfView = true;
+const scrub = $('scrub'); scrub.max = data.duration;
+function setPlaying(p) { playing = p; $('play').innerHTML = p ? '&#10074;&#10074; Pause' : '&#9654; Play'; if (p && t >= data.duration) t = 0; }
+$('play').onclick = () => setPlaying(!playing);
+scrub.oninput = () => { t = +scrub.value; };
+$('view').onchange = () => { firstFrameOfView = true; $('offwrap').style.display = $('view').value === 'camera' ? 'inline-flex' : 'none'; shownKey = ''; };
+$('off').oninput = () => { $('offval').textContent = (+$('off').value > 0 ? '+' : '') + $('off').value + ' m'; shownKey = ''; };
+$('camsel').onchange = () => { shownKey = ''; };
+$('trails').onchange = e => trails.forEach(l => (l.visible = e.target.checked));
+$('map').onchange = e => { mapGroup.visible = e.target.checked; };
+$('splats').onchange = e => { splat.visible = e.target.checked; if (e.target.checked) loadSplats(); };
+$('points').onchange = e => { scenePoints.visible = e.target.checked; };
+$('lidar').onchange = async e => { if (e.target.checked && !lidar) await loadLidar(); if (lidar) lidar.visible = e.target.checked; };
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'SELECT') return;
+  if (e.key === ' ') { setPlaying(!playing); e.preventDefault(); }
+  else if (e.key === ',' || e.key === '.') { setPlaying(false); t = Math.max(0, Math.min(data.duration, Math.round(t / DT + (e.key === '.' ? 1 : -1)) * DT)); scrub.value = t; }
+});
+
+const egoPos = new THREE.Vector3(), egoQuat = new THREE.Quaternion(), lastEgo = new THREE.Vector3(), tmp = new THREE.Vector3();
+function updateCamera() {
+  const view = $('view').value;
+  controls.enabled = view === 'orbit';
+  const yaw = new THREE.Euler().setFromQuaternion(egoQuat, 'ZYX').z, [x, y, z] = egoPos.toArray();
+  if (view === 'chase') {
+    camera.position.lerp(tmp.set(x - Math.cos(yaw) * 14, y - Math.sin(yaw) * 14, z + 6), firstFrameOfView ? 1 : 0.08);
+    camera.lookAt(x + Math.cos(yaw) * 10, y + Math.sin(yaw) * 10, z + 1);
+  } else if (view === 'top') {
+    camera.position.lerp(tmp.set(x, y - 0.01, z + 90), firstFrameOfView ? 1 : 0.1);
+    camera.lookAt(x, y, z);
+  } else if (view === 'orbit') {
+    if (firstFrameOfView) { controls.target.copy(egoPos); camera.position.set(x - 40, y - 40, z + 30); }
+    else { tmp.subVectors(egoPos, lastEgo); controls.target.add(tmp); camera.position.add(tmp); }   // follow the ego
+    controls.update();
+  } else {                                                              // through the selected rig camera
+    const Mw = camWorld(t, $('camsel').value, +$('off').value).multiply(CV_TO_GL);
+    Mw.decompose(camera.position, camera.quaternion, tmp);
+    camera.fov = 2 * Math.atan(Math.tan(Math.PI / 4) / camera.aspect) * 180 / Math.PI;   // 90 deg across
+  }
+  if (view !== 'camera')                                                // 55 deg tall, at least 60 deg across
+    camera.fov = Math.max(55, 2 * Math.atan(Math.tan(Math.PI / 6) / camera.aspect) * 180 / Math.PI);
+  camera.updateProjectionMatrix();
+  lastEgo.copy(egoPos); firstFrameOfView = false;
+}
+
+const _pos = new THREE.Vector3(), _quat = new THREE.Quaternion();
+window.replay = { THREE, renderer, scene, camera, splat, data, setTime: v => { t = v; scrub.value = v; } };   // for inspection
+renderer.setAnimationLoop(now => {
+  const dt = (now - last) / 1000; last = now;
+  if (playing) {
+    t += dt * +$('speed').value;
+    if (t >= data.duration) { t = data.duration; setPlaying(false); }
+    scrub.value = t;
+  }
+  const k = Math.round(t / DT);
+  $('time').innerHTML = `${t.toFixed(2)} s · tick ${k}` + (test.has(k) ? '<span class="badge test">held-out</span>' : '');
+  poseAt(data.ego.box, t, egoPos, egoQuat);
+  egoBox.position.copy(egoPos); egoBox.quaternion.copy(egoQuat);
+  const view = $('view').value, showBoxes = $('boxes').checked, splatsOn = $('splats').checked;
+  egoBox.visible = view !== 'camera';
+  for (const g of agents) {
+    const ok = poseAt(g.a.box, t, _pos, _quat);
+    g.box.visible = ok && showBoxes;
+    g.box.userData.faces.visible = !splatsOn;
+    if (ok) { g.box.position.copy(_pos); g.box.quaternion.copy(_quat); }
+  }
+  if (splatsReady) for (const { g, idx } of actorScenes) {
+    const s = splat.getSplatScene(idx), ok = poseAt(g.a.box, t, _pos, _quat);
+    s.position.copy(_pos); s.quaternion.copy(_quat);
+    s.scale.setScalar(ok && $('actorsplats').checked ? 1 : 1e-4);
+  }
+  frustum.matrix.copy(camWorld(t, $('camsel').value, view === 'camera' ? +$('off').value : 0));
+  frustum.visible = view !== 'camera';
+  if (lidar) { const i = Math.min(NT - 1, k); lidar.geometry.setDrawRange(lidarStart[i], data.lidar.counts[i]); }
+  updateCamera();
+  updatePanel(t);
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>

@@ -82,6 +82,15 @@ the driven path, and none runnable on a 6 GB laptop (Instant NuRec states >= 30 
 
 ## Findings and limitations
 
+- **Most Gaussians unused (found 2026-10-30, a flaw in my training setup)**: 1.10 M of the 1.41 M Gaussians are
+  background Gaussians more than 300 m from the scene centre with opacity below 0.05 (median distance of all
+  background Gaussians 3.9 km, the farthest 2.3e8 m). Removing them leaves the model's own render unchanged (86-107 dB
+  against the full model at the front camera, ticks 0 / 95 / 150), so the reconstruction above was fitted with
+  about 0.3 M working Gaussians. Cause: gsplat's MCMC position noise is proportional to the position learning rate,
+  which `train.py` scales by the scene size in metres (~100 m) where gsplat expects scenes normalised to about unit
+  size; faint Gaussians random-walk away and stay above the relocation threshold (opacity 0.005), so they are never
+  recycled (the "alive" count in the training log hid this). The metrics above are as measured with this model; a
+  retrain with the noise scaled correctly has not been run yet.
 - **Near-field road**: lane dashes and texture within ~10 m of the camera are blurred or missing in held-out and
   novel views (each dash is seen briefly at a grazing angle); this is the largest error region. Likely remedies:
   full-resolution training, more iterations, a road-surface prior / ground initialisation.

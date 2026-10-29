@@ -28,6 +28,7 @@ convert/                  measured CARLA conventions, instance-id map, raw -> PN
 recon/model.py, train.py  composite 3DGUT model (gsplat): background + per-actor Gaussians + sky, trainer
 evaluate/                 evaluation, exposure check, report generator, actor debug renders
 viewer/                   interactive viewer: the reconstruction rendered live next to CARLA's ground truth
+replay/                   3D replay viewer (three.js + Gaussian splats): scene, actors, map, lidar, cameras over time
 cloud/                    NuRec run script + notes for a Linux GPU machine (not run here)
 run_carla.ps1             CARLA server (-game, off-screen) -> client jobs -> server stopped (also on failure)
 run_pipeline.ps1          everything after planning
@@ -60,3 +61,26 @@ reconstruction with its raw PSNR at the shown resolution: the rig cameras at eve
 -3 ... +3 m beside the path every 4th tick.
 
 ![viewer](docs/img/viewer.jpg)
+
+## 3D replay viewer
+
+The scenario replayed in 3D, laid out like the viewer for NVIDIA's sample NuRec clip: the drive's static lidar points
+coloured from the cameras as the scene, the ego and actor boxes with trails, the OpenDRIVE lane lines / road edges /
+crosswalks, the semantic lidar sweep of the current tick, and a camera panel with CARLA's image and the
+reconstruction's render of the selected camera (PSNR, training or held-out view). Views: chase, top-down, free orbit,
+and through any rig camera (front camera up to +-3 m to the side, where the panel shows CARLA's re-simulated image).
+"Splats (approx.)" draws the reconstruction's Gaussians in the browser (background plus every dynamic actor moving
+with its box) with standard splatting, which does not reproduce this 3DGUT model: through the front camera it
+matches the model's own renders at only 7-9 dB (gsplat's standard splatting in Python: 14.6-16.3 dB), so it is off by
+default and only a rough preview.
+
+```powershell
+& C:\mywork\osm2carla\venv38\Scripts\python.exe replay\map_layers.py C:\mywork\osm2carla\export\LA_DTLA\LA_DTLA.xodr C:\mywork\osm2carla\build\nurec\replay04\map_layers.json --center 410.78,523.77
+$b = "C:\mywork\osm2carla\build\nurec"
+.\.venv\Scripts\python.exe replay\build_replay.py $b\ds04 $b\train04b\ckpt.pt $b\eval04b $b\replay04\map_layers.json $b\replay04 --novel $b\novel04
+.\.venv\Scripts\python.exe replay\serve.py $b\replay04
+```
+
+Then open http://127.0.0.1:8792/. The browser loads three.js 0.160.0 and GaussianSplats3D 0.4.7 from
+cdn.jsdelivr.net. In the splat export, background Gaussians beyond 2200 m from the centre (outside the model's
+2000 m far plane from every camera) are left out.
