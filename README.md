@@ -84,3 +84,14 @@ $b = "C:\mywork\osm2carla\build\nurec"
 Then open http://127.0.0.1:8792/. The browser loads three.js 0.160.0 and GaussianSplats3D 0.4.7 from
 cdn.jsdelivr.net. In the splat export, background Gaussians beyond 2200 m from the centre (outside the model's
 2000 m far plane from every camera) are left out.
+
+## License
+
+The code is licensed under the Apache License 2.0 (see [LICENSE](LICENSE)).
+
+- The images in `docs/img` are renders of CARLA scenes: CARLA's assets (vehicles, walkers, props, sky) are CC-BY 4.0
+  (attribution: "CARLA"), CARLA's code is MIT.
+- The world is MirrorMile's Downtown Los Angeles map. Map data (c) OpenStreetMap contributors (ODbL 1.0); elevation and
+  lidar: USGS 3DEP; imagery: USDA NAIP.
+- `replay/index.html` loads three.js and GaussianSplats3D (both MIT) from cdn.jsdelivr.net at run time; they are not
+  part of this repository.
