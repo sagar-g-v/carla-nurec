@@ -26,6 +26,8 @@ ap.add_argument("--seed", type=int, default=0); ap.add_argument("--log-every", t
 ap.add_argument("--box-noise", type=str, default="", help="T_SIGMA_M,YAW_SIGMA_DEG: perturb the actor boxes per frame")
 ap.add_argument("--refine-boxes", action="store_true", help="learn per-frame box corrections")
 ap.add_argument("--actor-reg", action="store_true", help="MCMC opacity / scale regularisers on actor groups too")
+ap.add_argument("--noise-unnormalised", action="store_true",
+                help="MCMC position noise as in train04b (scaled by the metric scene size: faint Gaussians drift away)")
 args = ap.parse_args()
 torch.manual_seed(args.seed); np.random.seed(args.seed)
 os.makedirs(args.out, exist_ok=True)
@@ -176,8 +178,10 @@ class SafeMCMC(MCMCStrategy):
 
 LR = dict(scales=5e-3, quats=1e-3, opacities=5e-2, sh0=2.5e-3, shN=2.5e-3 / 20)
 opt, strat, state = {}, {}, {}
+size = {}                                                              # group size (m): scales the means learning rate
 for n, g in scene.groups.items():
-    mlr = 1.6e-4 * (scene_scale if n == "bg" else 5.0)
+    size[n] = scene_scale if n == "bg" else 5.0
+    mlr = 1.6e-4 * size[n]
     # Adam only on Gaussians seen in the rendered view: with a 360 deg rig most Gaussians are invisible in any one
     # view, and plain Adam would turn the regularisers' tiny gradients into full steps that fade them out
     opt[n] = {k: SelectiveAdam([g[k]], eps=1e-15, betas=(0.9, 0.999)) for k in g.keys()}
@@ -255,7 +259,10 @@ for it in range(1, args.iters + 1):
             if m is not None and m.any():
                 o.step(m)
             o.zero_grad(set_to_none=True)
-        strat[n].step_post_backward(g, opt[n], state[n], it, info, lr=lr_m)
+        # MCMC uses lr only for its position noise, covariance (m^2) x lr x noise_lr: in a scene normalised to unit
+        # size (as gsplat assumes) that noise is size^2 smaller in metres than with the metric lr
+        strat[n].step_post_backward(g, opt[n], state[n], it, info,
+                                    lr=lr_m if args.noise_unnormalised else lr_m / size[n] ** 2)
     sky_opt.step(); sky_opt.zero_grad(set_to_none=True)
     if args.refine_boxes and it > 500:
         box_opt.step()
@@ -278,8 +285,10 @@ for it in range(1, args.iters + 1):
     if it % args.log_every == 0 or it == args.iters:
         n_g = {n: len(g["means"]) for n, g in scene.groups.items()}
         alive = {n: int((torch.sigmoid(g["opacities"]) > 0.0051).sum()) for n, g in scene.groups.items()}   # MCMC clamps to 0.005
+        r_bg = scene.groups["bg"]["means"].detach().norm(dim=1)
         row = dict(it=it, loss=round(loss.item(), 5), psnr_train=round(float(np.mean(hist[-args.log_every:])), 3),
                    alive_bg=alive["bg"], alive_actors=sum(v for k, v in alive.items() if k != "bg"),
+                   bg_dist_p50_m=round(float(r_bg.median()), 1), bg_beyond_300m=int((r_bg > 300).sum()),
                    actor_opacity_mean=round(float(torch.cat([torch.sigmoid(g["opacities"]) for k, g in scene.groups.items() if k != "bg"]).mean()), 4),
                    n_bg=n_g["bg"], n_actors=sum(v for k, v in n_g.items() if k != "bg"),
                    it_s=round(it / (time.time() - t_start), 2), vram_peak_mb=round(torch.cuda.max_memory_allocated() / 1e6),

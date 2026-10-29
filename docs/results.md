@@ -4,38 +4,38 @@
 |---|---|
 | training resolution | 640 x 360 |
 | iterations | 30000 |
-| wall time | 54.0 min |
-| peak VRAM (torch allocated) | 1949 MB |
+| wall time | 47.6 min |
+| peak VRAM (torch allocated) | 1959 MB |
 | Gaussians (background / actors) | 1200000 / 210000 |
 
 ## Held-out on-path views (every 10-th tick, all cameras; 120 images)
 
 | camera | PSNR dB | SSIM | LPIPS (alex) |
 |---|---|---|---|
-| CAM_FRONT | 20.76 | 0.866 | 0.210 |
-| CAM_FRONT_LEFT | 22.68 | 0.866 | 0.238 |
-| CAM_FRONT_RIGHT | 21.25 | 0.844 | 0.227 |
-| CAM_BACK_LEFT | 22.76 | 0.863 | 0.242 |
-| CAM_BACK_RIGHT | 20.95 | 0.839 | 0.248 |
-| CAM_BACK | 20.72 | 0.834 | 0.214 |
-| **all, raw** | **21.52** | **0.852** | **0.230** |
-| all, exposure-aligned | 22.41 | 0.857 | 0.228 |
+| CAM_FRONT | 21.78 | 0.900 | 0.153 |
+| CAM_FRONT_LEFT | 23.73 | 0.901 | 0.159 |
+| CAM_FRONT_RIGHT | 22.39 | 0.876 | 0.169 |
+| CAM_BACK_LEFT | 23.79 | 0.900 | 0.160 |
+| CAM_BACK_RIGHT | 21.60 | 0.864 | 0.196 |
+| CAM_BACK | 21.39 | 0.855 | 0.177 |
+| **all, raw** | **22.45** | **0.883** | **0.169** |
+| all, exposure-aligned | 23.38 | 0.888 | 0.166 |
 
 Raw: the rendering as is. Exposure-aligned: a per-image affine colour fit between rendering and ground truth first (CARLA's automatic exposure differs per image; the model never saw these images' exposure).
 
-Depth vs CARLA depth (non-sky, < 80 m, alpha > 0.5): AbsRel 0.065, RMSE 4.25 m, median |error| 0.324 m, delta<1.25 0.962.
+Depth vs CARLA depth (non-sky, < 80 m, alpha > 0.5): AbsRel 0.059, RMSE 5.13 m, median |error| 0.241 m, delta<1.25 0.971.
 
 ## Novel views off the driven path (front camera shifted sideways, CARLA re-simulation)
 
 | lateral offset (+ = right) | views | PSNR dB | SSIM | LPIPS | PSNR / SSIM / LPIPS exposure-aligned | depth AbsRel | depth median abs m |
 |---|---|---|---|---|---|---|---|
-| -3 m | 49 | 18.55 | 0.808 | 0.265 | 19.50 / 0.811 / 0.265 | 0.102 | 0.542 |
-| -2 m | 51 | 19.66 | 0.829 | 0.244 | 20.80 / 0.839 / 0.240 | 0.094 | 0.461 |
-| -1 m | 51 | 20.82 | 0.847 | 0.223 | 22.50 / 0.864 / 0.216 | 0.080 | 0.413 |
-| +0 m | 51 | 21.53 | 0.858 | 0.212 | 23.64 / 0.877 / 0.205 | 0.075 | 0.402 |
-| +1 m | 51 | 20.69 | 0.846 | 0.220 | 22.59 / 0.864 / 0.213 | 0.074 | 0.419 |
-| +2 m | 51 | 19.58 | 0.829 | 0.233 | 21.06 / 0.845 / 0.228 | 0.076 | 0.454 |
-| +3 m | 51 | 18.60 | 0.812 | 0.249 | 19.78 / 0.824 / 0.246 | 0.081 | 0.499 |
+| -3 m | 49 | 19.11 | 0.834 | 0.210 | 20.00 / 0.836 / 0.210 | 0.078 | 0.374 |
+| -2 m | 51 | 20.21 | 0.855 | 0.189 | 21.29 / 0.863 / 0.185 | 0.076 | 0.340 |
+| -1 m | 51 | 21.51 | 0.876 | 0.165 | 23.11 / 0.890 / 0.159 | 0.066 | 0.315 |
+| +0 m | 51 | 22.56 | 0.891 | 0.151 | 24.69 / 0.907 / 0.144 | 0.062 | 0.300 |
+| +1 m | 51 | 21.53 | 0.876 | 0.161 | 23.27 / 0.892 / 0.156 | 0.063 | 0.308 |
+| +2 m | 51 | 20.17 | 0.857 | 0.179 | 21.46 / 0.870 / 0.174 | 0.067 | 0.333 |
+| +3 m | 51 | 19.11 | 0.837 | 0.198 | 20.09 / 0.846 / 0.196 | 0.070 | 0.358 |
 
 Re-simulation noise floor (re-simulated front camera at offset 0, ego parked out of view, vs the live recording, ego pixels excluded; differences come from walker animation, the missing ego shadow and exposure): PSNR 31.80 dB, SSIM 0.974, LPIPS 0.014 over 51 frames. Re-simulated actor positions vs the live run (mean / max m): lead 0.000/0.000, cyclist 0.000/0.000, oncoming_lt 0.000/0.000, oncoming_rt 0.000/0.000, oncoming_stop 0.000/0.000, ped_far_0 0.000/0.000, ped_far_1 0.000/0.000, ped_left_0 0.000/0.000, ped_left_1 0.000/0.000, ped_right_0 0.000/0.000, wait_0 0.000/0.000, wait_1 0.000/0.000, cyclist_rider 0.000/0.000.
 
@@ -45,26 +45,26 @@ Skipped 2 novel views whose camera was inside an actor box: frame 172 -3 m (onco
 
 | | |
 |---|---|
-| rendered depth at lidar points: median abs error | 0.259 m |
-| ... within 0.5 m / 1 m | 0.724 / 0.884 |
-| chamfer: accuracy (recon -> lidar) mean / median | 0.814 / 0.229 m |
-| chamfer: completeness (lidar -> recon) mean / median | 0.063 / 0.041 m |
-| F-score @ 0.2 m / 0.5 m | 0.621 / 0.835 |
+| rendered depth at lidar points: median abs error | 0.196 m |
+| ... within 0.5 m / 1 m | 0.801 / 0.915 |
+| chamfer: accuracy (recon -> lidar) mean / median | 0.759 / 0.178 m |
+| chamfer: completeness (lidar -> recon) mean / median | 0.052 / 0.037 m |
+| F-score @ 0.2 m / 0.5 m | 0.696 / 0.886 |
 
 ## Dynamic actors
 
 | actor | mask IoU (views) | Gaussian extent l x w x h (m) | ground-truth box (m) | centre offset (m) |
 |---|---|---|---|---|
-| cyclist | 0.784 (7) | 0.92 x 0.64 x 1.42 | 1.47 x 0.84 x 1.48 | 0.204 |
-| lead | 0.689 (9) | 1.40 x 1.84 x 1.15 | 4.18 x 1.99 x 1.39 | 1.518 |
-| oncoming_lt | 0.791 (14) | 5.31 x 2.16 x 1.96 | 5.59 x 2.15 x 2.06 | 0.042 |
-| oncoming_rt | 0.764 (13) | 5.09 x 1.79 x 1.29 | 5.36 x 2.03 x 1.41 | 0.082 |
-| oncoming_stop | 0.596 (11) | 5.15 x 1.71 x 1.61 | 5.35 x 1.79 x 1.57 | 0.209 |
-| ped_far_0 | 0.561 (8) | 1.46 x 1.53 x 2.77 | 0.33 x 0.87 x 1.80 | 0.748 |
-| ped_far_1 | 0.529 (5) | 1.79 x 1.95 x 2.84 | 0.40 x 0.70 x 1.93 | 0.672 |
-| ped_left_0 | 0.000 (2) | 37.97 x 16.01 x 6.53 | 0.37 x 0.72 x 1.83 | 5.122 |
-| ped_left_1 | 0.012 (1) | 8.86 x 26.06 x 23.30 | 0.42 x 0.78 x 1.95 | 14.004 |
-| ped_right_0 | - | 0.88 x 0.68 x 2.14 | 0.43 x 0.70 x 1.84 | 0.530 |
+| cyclist | 0.782 (7) | 0.83 x 0.61 x 1.39 | 1.47 x 0.84 x 1.48 | 0.198 |
+| lead | 0.774 (9) | 2.50 x 1.83 x 1.26 | 4.18 x 1.99 x 1.39 | 0.927 |
+| oncoming_lt | 0.795 (14) | 5.30 x 2.14 x 1.91 | 5.59 x 2.15 x 2.06 | 0.029 |
+| oncoming_rt | 0.768 (13) | 5.04 x 1.76 x 1.28 | 5.36 x 2.03 x 1.41 | 0.081 |
+| oncoming_stop | 0.668 (11) | 5.14 x 1.63 x 1.36 | 5.35 x 1.79 x 1.57 | 0.107 |
+| ped_far_0 | 0.564 (8) | 0.93 x 0.48 x 1.71 | 0.33 x 0.87 x 1.80 | 0.294 |
+| ped_far_1 | 0.569 (5) | 0.76 x 0.48 x 1.76 | 0.40 x 0.70 x 1.93 | 0.179 |
+| ped_left_0 | 0.000 (2) | 126.62 x 23.26 x 14.46 | 0.37 x 0.72 x 1.83 | 62.006 |
+| ped_left_1 | 0.010 (1) | 22.17 x 13.87 x 17.43 | 0.42 x 0.78 x 1.95 | 15.365 |
+| ped_right_0 | - | 0.27 x 0.49 x 1.52 | 0.43 x 0.70 x 1.84 | 0.141 |
 
 actor positions come from the ground-truth boxes (as NuRec's cuboid tracks); IoU measures how well the reconstructed actor shape covers CARLA's instance mask, with occlusion
 

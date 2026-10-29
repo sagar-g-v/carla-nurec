@@ -13,7 +13,10 @@ static background and the dynamic actors separated the way NuRec does it, and co
 
 | held-out on-path views | novel views +-1 / +-2 / +-3 m | depth AbsRel | lidar F-score @ 0.5 m | fit on RTX 4050 6 GB |
 |---|---|---|---|---|
-| 21.5 dB / SSIM 0.852 / LPIPS 0.230 | ~20.8 / ~19.6 / ~18.6 dB | 0.065 | 0.83 | 54 min, 1.95 GB VRAM |
+| 22.4 dB / SSIM 0.883 / LPIPS 0.169 | ~21.5 / ~20.2 / ~19.1 dB | 0.059 | 0.89 | 48 min, 1.96 GB VRAM |
+
+Numbers of the retrained model (`train05b`, 2026-10-30); the first model and what changed:
+[report: before and after the MCMC noise fix](docs/report.md#before-and-after-the-mcmc-noise-fix).
 
 ## Layout
 
@@ -50,7 +53,7 @@ Outputs (recordings, datasets, NCore, checkpoints, evaluation) go to `-Build`, o
 ## Viewer
 
 ```powershell
-.\.venv\Scripts\python.exe viewer\serve.py C:\mywork\osm2carla\build\nurec\ds04 C:\mywork\osm2carla\build\nurec\train04b\ckpt.pt --novel C:\mywork\osm2carla\build\nurec\novel04
+.\.venv\Scripts\python.exe viewer\serve.py C:\mywork\osm2carla\build\nurec\ds04 C:\mywork\osm2carla\build\nurec\train05b\ckpt.pt --novel C:\mywork\osm2carla\build\nurec\novel04
 ```
 
 Then open http://127.0.0.1:8765/. A local server renders the checkpoint on the GPU (about 30 ms per 640 x 360 or
@@ -71,14 +74,14 @@ reconstruction's render of the selected camera (PSNR, training or held-out view)
 and through any rig camera (front camera up to +-3 m to the side, where the panel shows CARLA's re-simulated image).
 "Splats (approx.)" draws the reconstruction's Gaussians in the browser (background plus every dynamic actor moving
 with its box) with standard splatting, which does not reproduce this 3DGUT model: through the front camera it
-matches the model's own renders at only 7-9 dB (gsplat's standard splatting in Python: 14.6-16.3 dB), so it is off by
-default and only a rough preview.
+matches the model's own renders at only 7.5-9.6 dB (ticks 0 / 95 / 150; gsplat's standard splatting in Python gave
+14.6-16.3 dB on the first model), so it is off by default and only a rough preview.
 
 ```powershell
-& C:\mywork\osm2carla\venv38\Scripts\python.exe replay\map_layers.py C:\mywork\osm2carla\export\LA_DTLA\LA_DTLA.xodr C:\mywork\osm2carla\build\nurec\replay04\map_layers.json --center 410.78,523.77
+& C:\mywork\osm2carla\venv38\Scripts\python.exe replay\map_layers.py C:\mywork\osm2carla\export\LA_DTLA\LA_DTLA.xodr C:\mywork\osm2carla\build\nurec\replay05\map_layers.json --center 410.78,523.77
 $b = "C:\mywork\osm2carla\build\nurec"
-.\.venv\Scripts\python.exe replay\build_replay.py $b\ds04 $b\train04b\ckpt.pt $b\eval04b $b\replay04\map_layers.json $b\replay04 --novel $b\novel04
-.\.venv\Scripts\python.exe replay\serve.py $b\replay04
+.\.venv\Scripts\python.exe replay\build_replay.py $b\ds04 $b\train05b\ckpt.pt $b\eval05b $b\replay05\map_layers.json $b\replay05 --novel $b\novel04
+.\.venv\Scripts\python.exe replay\serve.py $b\replay05
 ```
 
 Then open http://127.0.0.1:8792/. The browser loads three.js 0.160.0 and GaussianSplats3D 0.4.7 from
